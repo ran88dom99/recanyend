@@ -1,0 +1,654 @@
+
+user self selection bias https://arxiv.org/pdf/1602.05352v1.pdf
+Most popular of genera include raters who are not fans of genera. Add this info to ratings and fans of a series for mor self selection research. 
+check every single kaggel notebook on these things, highly rated python too.
+
+tag by tag heat table
+people as one more tag to cross
+column importance selection
+
+
+
+Have you ever wondered which book to read next? I often have and to me, book recommendations are a fascinating issue.
+This external dataset allows us to take a deeper look at data-driven item recommendations.
+
+* **Part I:** explores the dataset to find some interesting insights.  
+As an appetizer here you can access (just click on the image) the finished fully functional book recommender based on ratings of this dataset:
+
+[<img src="http://i.imgur.com/uKyBvijg.png">](https://philippsp.shinyapps.io/BookRecommendation/)
+
+Let's go.
+
+ Part I: Exploratory Analysis 
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+#### Have a look at the dataset {.tabset}
+
+First, let's have a look at the dataset. It consists of the files: `ratings.csv`, `books.csv`, `item_tags.csv`, `tags.csv`.  
+
+As the name suggests `ratings.csv` contains all users's ratings of the items (a total of 980k ratings, for 10,000 items, from 53,424 users), while `books.csv` contains more information on the items such as author, year, etc. `item_tags` contains all tag_ids users have assigned to that items and corresponding tag_counts, while `tags.csv` contains the tag_names corresponding to the tag_ids. 
+
+These two files are linked by the items' ids. 
+### Let's start the Exploration
+To reduce calculation times in EDA, I select only a subset of users. (e.g., 50%)
+#### Select a subset of users
+```{r, warning=FALSE}
+set.seed(1)
+user_fraction <- .4
+users <- unique(ratings$user_id)
+sample_users <- sample(users, round(user_fraction * length(users)))
+
+cat('Number of ratings (before): ', nrow(ratings))
+ratings <- ratings[user_id %in% sample_users]
+cat('Number of ratings (after): ', nrow(ratings))
+```
+
+#### Distribution of mean user ratings
+People have different tendencies to rate items. Some already give 5 stars to a mediocre item, while others do not give 5 stars unless it is the perfect item for them. Such tendencies can be seen in the figure below. On the right side there is a bump from users with a mean rating of 5, indicating that they really liked all items (or they only rated items they really like...). We can also see that there are nearly no notoriuous downvoters rating all items with a 1. Such tendencies are going to be important for collaborative filtering later, and are typically dealt with by subtracting the user's mean rating from their ratings. Standard deviation too to measure dispersion. and then 
+
+
+```{r}
+ratings %>% 
+  group_by(user_id) %>% 
+  dplyr::summarize(mean_user_rating = mean(rating)) %>% 
+  ggplot(aes(mean_user_rating)) +
+  geom_histogram(fill = "cadetblue3", color = "grey20")
+ratings %>% 
+  group_by(user_id) %>% 
+  dplyr::summarize(sd_user_rating = sd(rating)) %>% 
+  ggplot(aes(sd_user_rating)) +
+  geom_histogram(fill = "cadetblue3", color = "grey20")
+ratings %>% 
+  group_by(user_id) %>% 
+  dplyr::summarize(mean_user_rating = mean(rating),sd_user_rating = sd(rating)) %>%
+  ggplot(aes(x=mean_user_rating,y=sd_user_rating)) +
+  geom_point(stat="identity", position="jitter", alpha=0.3, size=1)+ 
+  geom_density2d(stat="density2d", position="identity")
+```
+
+
+#### Distribution of mean item ratings
+Mean item ratings don't reveal any peculiarities. 
+```{r}
+ratings %>% 
+  group_by(item_id) %>% 
+  dplyr::summarize(mean_item_rating = mean(rating)) %>% 
+  ggplot(aes(mean_item_rating)) + geom_histogram(fill = "orange", color = "grey20") #+ coord_cartesian(c(1,5))
+ratings %>% 
+  group_by(item_id) %>% 
+  dplyr::summarize(sd_item_rating = sd(rating)) %>% 
+  ggplot(aes(sd_item_rating)) + geom_histogram(fill = "orange", color = "grey20")
+ratings %>% 
+  group_by(item_id) %>% 
+  dplyr::summarize(mean_item_rating = mean(rating),sd_item_rating = sd(rating)) %>%
+  ggplot(aes(x=mean_item_rating,y=sd_item_rating)) +
+  geom_point(stat="identity", position="jitter", alpha=0.3, size=1)+ 
+  geom_density2d(stat="density2d", position="identity")
+
+```
+#### Top 100 rated items
+Books only: It is apparent that users seem to like a) Calvin and Hobbes in general, b) compilations of items. This makes sense intuitively as people won't get interested in an entire compilation if they don't like the individual items. The other two data frame outputs are the most and least popular of top 100 rated.
+
+```{r}
+books %>% 
+  mutate(image = paste0('<img src="', small_image_url, '"></img>')) %>% 
+  arrange(-average_rating) %>% 
+  top_n(100,wt = average_rating) %>% 
+  select( title, work_ratings_count, average_rating,men.I,num.I,sd.I)
+books %>% 
+  mutate(image = paste0('<img src="', small_image_url, '"></img>')) %>% 
+  arrange(-work_ratings_count) %>% 
+  top_n(100,wt = average_rating) %>% 
+  top_n(10,wt = work_ratings_count) %>% 
+  select( title, work_ratings_count, average_rating,men.I,num.I,sd.I)
+books %>% 
+  mutate(image = paste0('<img src="', small_image_url, '"></img>')) %>% 
+  arrange(-work_ratings_count) %>% 
+  top_n(100,wt = average_rating) %>% 
+  top_n(10,wt = -work_ratings_count) %>% 
+  select( title, work_ratings_count, average_rating,men.I,num.I,sd.I)
+#%>% 
+#  datatable(class = "nowrap hover row-border", escape = FALSE, options = list(dom = 't',scrollX = TRUE, autoWidth = TRUE))
+```
+
+
+
+#### Top 100 popular items
+By looking at the items that were rated most often we can get an impression of the popularity of a item. You can see the top 100 popular items in the table below.  The other two data frame outputs are the most and least highly rated of 100 popular.
+```{r, warning=FALSE}
+books %>% 
+  mutate(image = paste0('<img src="', small_image_url, '"></img>')) %>% 
+  arrange(-work_ratings_count) %>% 
+  top_n(100,wt = work_ratings_count) %>% 
+  select( title, work_ratings_count, average_rating,men.I,num.I,sd.I) 
+
+books %>% 
+  mutate(image = paste0('<img src="', small_image_url, '"></img>')) %>% 
+  arrange(-average_rating) %>% 
+  top_n(100,wt = work_ratings_count) %>% 
+  top_n(10,wt = average_rating) %>% 
+  select( title, work_ratings_count, average_rating,men.I,num.I,sd.I)
+books %>% 
+  mutate(image = paste0('<img src="', small_image_url, '"></img>')) %>% 
+  arrange(-average_rating) %>% 
+  top_n(100,wt = work_ratings_count) %>% 
+  top_n(10,wt = -average_rating) %>% 
+  select( title, work_ratings_count, average_rating,men.I,num.I,sd.I)
+```
+Items with fewer ratings than 120,00 have no obvious pattern far different than entire highly rated set.
+The most popular of most top rated are all Harry Potter.
+Why are popular books poorly rated? When do people rate books they may not like?
+Controversy of some series, specificaly fifty shades and twilight. https://io9.gizmodo.com/5413428/official-twilights-bella--edward-are-in-an-abusive-relationship
+Fifty Shades of Grey (Fifty Shades, #1)	1338493	3.67
+Twilight (Twilight, #1)	3,866,839	3.57
+New Moon (Twilight, #2)	1149630	3.52
+Eclipse (Twilight, #3)	1134511	3.69
+Breaking Dawn (Twilight, #4)	1,070,245	3.70
+
+Many overhyped and many people had to get it off their chest. 
+ The Alchemist	1299566	3.82
+ Eragon (The Inheritance Cycle, #1)	1104021	3.86
+Because Dan Brown made it all up:
+ Angels & Demons (Robert Langdon, #1)	2001311	3.85
+ The Da Vinci Code (Robert Langdon, #2)	1447148	3.79
+Because Oprah suggested them? 
+ The Lovely Bones	1605173	3.77
+ Eat, Pray, Love	1181647	3.51  controversial too.
+ 
+Some are scholl assigned book readings like animal farm. 
+These are extremely usefull because they show what happens to ratings when people are not allowed to self select.
+Mean ratings go down and that means using means as imputation for missing values has at least one problem. 
+ Animal Farm	1881700	3.87
+ Romeo and Juliet	1628519	3.73
+ Of Mice and Men	1467496	3.84
+ The Catcher in the Rye	2044241	3.79
+ Lord of the Flies	1605019	3.64
+ The Great Gatsby	2683664	3.89
+ The Odyssey 670326	3.73
+ To Kill a Mockingbird 300k 4.25
+ Brave New World 100k 3.97
+ Fahrenheit 451 1176240	3.97
+
+```{r}
+library(ggrepel)
+ books %>% 
+  mutate(image = paste0('<img src="', small_image_url, '"></img>')) %>% 
+  arrange(-work_ratings_count) %>% 
+  top_n(100,wt = work_ratings_count) %>%
+  ggplot( aes(y=average_rating, x=work_ratings_count, label=title)) + geom_point(stat="identity", position="jitter", alpha=1, size=1) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=10, hjust=0.5, vjust=0.5)) + scale_size(range=c(1, 3)) + xlab("work_ratings_count")+geom_text_repel(
+        aes(work_ratings_count, average_rating, label = title),
+        box.padding = 0.35, point.padding = 0.15,size=1,
+        segment.color = 'red', segment.size = 0.3)  + ylab("average_rating")
+ggsave("popularityvsratings.png")
+books %>% 
+  mutate(image = paste0('<img src="', small_image_url, '"></img>')) %>% 
+  arrange(-work_ratings_count) %>% 
+  top_n(100,wt = work_ratings_count)  %>%
+  select("average_rating")%>%
+  summary()
+
+summary(c(3.87,3.73,3.84,3.79,3.64,3.89,3.73,4.25,3.97,3.97))
+summary(books$average_rating)
+```
+Summaries of most popular, school and all books.
+Looks drop is half IQR or .2.
+For more see self selection bias: https://arxiv.org/pdf/1602.05352v1.pdf https://en.wikipedia.org/wiki/Missing_data
+<br><br>
+
+##### Distribution of every other interesting continuos varieble. First pick which continuos vars are important.
+```{r}
+books
+cols_tosee<-c("average_rating","original_publication_year","editions_count","work_ratings_count","work_text_reviews_count")
+
+```
+
+Quick check on your interesting_cont_vars pics. 
+In books the date of publication graph shows the first great age of literature at -500. Mostly these graphs only show problems. 
+```{r}
+for(col_name in cols_tosee){
+ print(ggplot(books,aes(get(col_name))) + 
+  geom_bar(fill = "orange", color = "grey20") + xlab(col_name) )
+  
+  
+    fn<-fivenum(books[[col_name]], na.rm = TRUE)
+  iqr<-1.5 * (fn[4]-fn[2]);
+  print(ggplot(books, aes(x=(get(col_name)))) + geom_density(aes(y=..density..), stat="density", position="identity", alpha=0.5) +  theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=15, hjust=0.5, vjust=0.5)) + xlab(col_name) + ylab("density")+ coord_cartesian(xlim=c( min(fn[4]+iqr,fn[5]),max(fn[2]-iqr,fn[1]) )) )
+}
+    
+```
+#### Distribution of Genres
+Extracting the genres of the items is not trivial since users assign self-chosen tags to items, which may or may not be the same as genres defined by website. As a pragmatic way Philipp chose only the tags the match those provided by website. This could be improved by grouping similar tags together (like 'self-help', 'self help' etc. to 'Self Help'). But Philipp thinks this approach is fine for a first glance.
+
+We see that most items are "Fantasy", "Romance", or "Mistery" items, while there are not very many "Cookbooks" in the database.
+
+```{r}
+genres <- str_to_lower(c("Art", "Biography", "Business", "Chick Lit", "Children's", "Christian", "Classics", "Comics", "Contemporary", "Cookbooks", "Crime", "Ebooks", "Fantasy", "Fiction", "Gay and Lesbian", "Graphic Novels", "Historical Fiction", "History", "Horror", "Humor and Comedy", "Manga", "Memoir", "Music", "Mystery", "Nonfiction", "Paranormal", "Philosophy", "Poetry", "Psychology", "Religion", "Romance", "Science", "Science Fiction", "Self Help", "Suspense", "Spirituality", "Sports", "Thriller", "Travel", "Young Adult"))
+
+exclude_genres <- c("fiction", "nonfiction", "ebooks", "contemporary")
+genres <- setdiff(genres, exclude_genres)
+
+available_genres <- genres[str_to_lower(genres) %in% tags$tag_name]
+available_tags <- tags$tag_id[match(available_genres, tags$tag_name)]
+
+tmp <- item_tags %>% 
+  filter(tag_id %in% available_tags) %>% 
+  group_by(tag_id) %>%
+  dplyr::summarize(n = n()) %>%
+  ungroup() %>%
+  mutate(sumN = sum(n), percentage = n / sumN) %>%
+  arrange(-percentage) %>%
+  left_join(tags, by = "tag_id")
+
+tmp %>% 
+  ggplot(aes(reorder(tag_name, percentage), percentage, fill = percentage)) +
+  geom_bar(stat = "identity") + coord_flip() + scale_fill_distiller(palette = 'YlOrRd') +
+  labs(y = 'Percentage', x = 'Genre')
+
+```
+Group items by above tags then plot every interesting column. Using the books dataset I found that manga, comic and christian books are rated higher. Philosophy, poetry and classics are older. 
+```{r}
+
+itemsntags<-merge(books,item_tags[tag_id %in% available_tags],by="goodreads_book_id",all.x=T)
+itemsntags<-merge(itemsntags,tmp,by="tag_id")
+
+
+for(col_name in cols_tosee){
+  print(ggplot(itemsntags, aes(y=get(col_name), x=reorder(as.factor(tag_name),percentage))) +
+    geom_boxplot(stat="boxplot", position="dodge", alpha=0.5, width=0.2) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=9, hjust=0.5, vjust=0.5)) + xlab("tag") + ylab(col_name)+theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2)))
+ 
+  fn<-fivenum(itemsntags[[col_name]], na.rm = TRUE)
+  iqr<-1.5 * (fn[4]-fn[2]);
+  print(ggplot(itemsntags, aes(y=get(col_name), x=reorder(as.factor(tag_name),percentage))) +
+    geom_boxplot(stat="boxplot", position="dodge", alpha=0.5, width=0.2) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=9, hjust=0.5, vjust=0.5)) + xlab("tag without outliers") + ylab(col_name)+theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2)) +
+    coord_cartesian(ylim=c( min(fn[4]+iqr,fn[5]),max(fn[2]-iqr,fn[1]) )) )
+}
+```
+
+
+
+
+
+#### Different languages
+You might have seen in the `item_content.csv` that there is language information on the items. This is interesting because most sites are english speaking. However, the dataset contains some items in different languages. The reason is that typically there are multiple editions of a item (both in the same language and in different languages). For this dataset it seems that the most popular edition was included, which for some items is their original language. 
+
+```{r}
+p1 <- books %>% 
+  mutate(language = factor(language_code)) %>% 
+  group_by(language) %>% 
+  dplyr::summarize(number_of_items = n()) %>% 
+  arrange(-number_of_items) %>% 
+  ggplot(aes(reorder(language, number_of_items), number_of_items, fill = reorder(language, number_of_items))) +
+  geom_bar(stat = "identity", color = "grey20", size = 0.35) + coord_flip() +
+  labs(x = "language", title = "english included") + guides(fill = FALSE)
+
+p2 <- books %>% 
+  mutate(language = factor(language_code)) %>% 
+  filter(!language %in% c("en-US", "en-GB", "eng", "en-CA", "")) %>% 
+  group_by(language) %>% 
+  dplyr::summarize(number_of_items = n()) %>% 
+  arrange(-number_of_items) %>% 
+  ggplot(aes(reorder(language, number_of_items), number_of_items, fill = reorder(language, number_of_items))) +
+  geom_bar(stat = "identity", color = "grey20", size = 0.35) + coord_flip() +
+  labs(x = "", title = "english excluded") + guides(fill = FALSE)
+
+grid.arrange(p1,p2, ncol=2)
+```
+
+Group items by above categorical varieble then plot every interesting column. Maybe I just like making plots.
+```{r}
+books[, NLv := .N, .(language_code)]
+
+for(col_name in cols_tosee){
+print(ggplot(books, aes(y=get(col_name), x=reorder(as.factor(language_code),NLv))) +
+    geom_boxplot(stat="boxplot", position="dodge", alpha=0.5, width=0.2) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=9, hjust=0.5, vjust=0.5)) + xlab("lang") + ylab(col_name)+theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2)))
+ 
+  fn<-fivenum(books[[col_name]], na.rm = TRUE)
+  iqr<-1.5 * (fn[4]-fn[2]);
+print(ggplot(books, aes(y=get(col_name), x=reorder(as.factor(language_code),NLv))) +
+    geom_boxplot(stat="boxplot", position="dodge", alpha=0.5, width=0.2) + theme_grey() + theme(text=element_text(family="sans", face="plain", color="#000000", size=9, hjust=0.5, vjust=0.5)) + xlab("lang without outliers") + ylab(col_name)+theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2)) +
+    coord_cartesian(ylim=c( min(fn[4]+iqr,fn[5]),max(fn[2]-iqr,fn[1]) )) )
+}
+
+#and crosstab language code
+rm(itemsntags)
+```
+And finaly cross tabulation of the above 2 categorical variebles.
+```{r}
+itemsntags<-merge(books,item_tags[tag_id %in% available_tags],by="goodreads_book_id",all.x=T)
+itemsntags<-merge(itemsntags,tmp,by="tag_id")
+itemsntags[, NL := .N, .(language_code)]
+itemsntags[, NT := .N, .(tag_name)]
+itemsntags[, NLT := .N, .(language_code,tag_name)]
+itemsntags[, NLTP := NLT/(NT*NL)]
+.Table <- xtabs(~language_code+tag_name, data=itemsntags)
+  cat("\nFrequency table:\n")
+  print(.Table)
+  
+  ggplot() +
+ geom_bin2d(aes(x = tag_name,y = tag_name,fill = log10(..count..)),data=itemsntags,drop = FALSE) +
+scale_fill_gradient(guide = guide_colourbar(),low = '#ffffff',high = '#c90700') +theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2))
+  ggplot() +
+ geom_bin2d(aes(x = language_code,y = tag_name,fill = log10(..count..)),data=itemsntags,drop = FALSE) +
+scale_fill_gradient(guide = guide_colourbar(),low = '#ffffff',high = '#c90700') +theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2))
+  ggplot() +
+ geom_bin2d(aes(x = language_code,y = tag_name,fill = log10(NLTP)),data=itemsntags,drop = FALSE) +
+scale_fill_gradient(guide = guide_colourbar(),low = '#ffffff',high = '#c90700') +theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2))
+  itemsntags[, NLTP := NLT/(NL)]
+    ggplot() +
+ geom_bin2d(aes(x = language_code,y = tag_name,fill = log10(NLTP)),data=itemsntags,drop = FALSE) +
+scale_fill_gradient(guide = guide_colourbar(),low = '#ffffff',high = '#c90700') +theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2))
+  itemsntags[, NLTP := NLT/(NT)]
+    ggplot() +
+ geom_bin2d(aes(x = language_code,y = tag_name,fill = log10(NLTP)),data=itemsntags,drop = FALSE) +
+scale_fill_gradient(guide = guide_colourbar(),low = '#ffffff',high = '#c90700') +theme(axis.text.x=element_text(size=7, angle=270,hjust=0.95,vjust=0.2))
+
+rm(itemsntags)#MUST SORT!!
+```
+Crosstabulation and graphs. First xtab of log10 of counts. 3rd and 4th are percentages of column and row. 2nd cells are calculated as cell count / (row count * column count). All log 10 so a few spots don't outshine evrything else.  Goal is to see unexpected high counts. For example, using books, 4th graph implies that spirituality comics and manga are popular in India. 3rd graph shows that all forms of english like tags almost in the same proportion.
+
+
+<br>  
+
+#### What influences a item's rating?
+Next, we can see, whether we can find any associations of features with a item's rating. 
+For a quick look, let's first plot the correlation matrix between the items average_rating and some variables.
+In summary, we see only small correlations between the features and the average rating (last row), indicating that there are no strong relationships between the rating a item receives and meta-variables (like rating counts etc.). This means that the rating depends more strongly on other features (e.g. the quality of the items itself). 
+
+```{r}
+tmp <- books %>% 
+  select(one_of( cols_tosee)) %>% 
+  as.matrix()
+
+corrplot(cor(tmp, use = 'pairwise.complete.obs'), type = "lower")
+```
+<br><br>  
+
+#### Is there a relationship between the number of ratings and the average rating?
+
+Theoretically, it might be that the popularity of a item (in terms of the number of ratings it receives) is associated with the average rating it receives, such that once a item is becoming popular it gets better ratings. However, our data shows that
+this is true only to a very small extent. The correlation between these variables is only 0.045.
+
+```{r}
+
+get_cor <- function(df){
+    m <- cor(df$x,df$y, use="pairwise.complete.obs");
+    eq <- substitute(italic(r) == cor, list(cor = format(m, digits = 2)))
+    as.character(as.expression(eq));                 
+}
+
+books %>% 
+  filter(work_ratings_count < 1e+5) %>% 
+  ggplot(aes(work_ratings_count, average_rating)) + stat_bin_hex(bins = 50) + scale_fill_distiller(palette = "Spectral") + 
+  stat_smooth(method = "lm", color = "orchid", size = 2) +
+  annotate("text", x = 85000, y = 2.7, label = get_cor(data.frame(x = books$work_ratings_count, y = books$average_rating)), parse = TRUE, color = "orchid", size = 7)
+```
+
+
+#### Multiple editions of each item
+The dataset contains information about how many editions of a item are available in `item_count`. These can either be different editions in the same language or also translations of the item into different languages. So one might assume, that the better the item is the more editions should be available. In fact, data show exactly the opposite pattern: The more editions a item has the lower is the average rating. The causal direction of this association is of course unclear here. 
+
+```{r}
+books %>% filter(editions_count <= 500) %>% ggplot(aes(editions_count, average_rating)) + stat_bin_hex(bins = 50) + scale_fill_distiller(palette = "Spectral") + 
+  stat_smooth(method = "lm", color = "orchid", size = 2) +
+  annotate("text", x = 400, y = 2.7, label = get_cor(data.frame(x = books$editions_count, y = books$average_rating)), parse = TRUE, color = "orchid", size = 7)
+
+```
+
+#### Do frequent raters rate differently?
+
+It is possible, that users that rate more items (frequent raters) rate items differently from less frequent raters. The figure below
+explores this possibility. It seems like frequent raters tend to give lower ratings to items, maybe they are/become more critical the more they read and rate. That's interesting. 
+
+Look at the distribution of ratings of users with few ratings at about line 220.
+
+```{r}
+tmp <- ratings %>% 
+  group_by(user_id) %>% 
+  dplyr::summarize(mean_rating = mean(rating), number_of_rated_items = n())
+
+tmp %>% filter(number_of_rated_items <= 100) %>% 
+  ggplot(aes(number_of_rated_items, mean_rating)) + stat_bin_hex(bins = 50) + scale_fill_distiller(palette = "Spectral") + stat_smooth(method = "lm", color = "orchid", size = 2, se = FALSE) +
+  annotate("text", x = 80, y = 1.9, label = get_cor(data.frame(x = tmp$number_of_rated_items, y = tmp$mean_rating)), color = "orchid", size = 7, parse = TRUE)
+
+```
+#### Do very recent books get rated higher and Other Attacks
+Rate of Return. Investors don't just want lots of money gained for every dollar they invest they also want it as soon as possible so they can reinvest sooner and make even more money. This is why the most new items are often rated higher than average. It should be like a wave.
+```{r}
+books %>%  
+  filter(original_publication_year>
+                 quantile(original_publication_year,probs=.9,na.rm=T) )%>% 
+  ggplot(aes(average_rating)) + geom_histogram(fill = "green", color = "grey20")+ 
+  xlab("ave_rating of 10% of newest items")
+books %>%  
+  filter(original_publication_year<
+                 quantile(original_publication_year,probs=.1,na.rm=T) )%>% 
+  ggplot(aes(average_rating)) + geom_histogram(fill = "green", color = "grey20")+ 
+  xlab("ave_rating of 10% of oldest items")
+books %>%  
+  filter(original_publication_year>
+                 quantile(original_publication_year,probs=.9,na.rm=T) )%>% 
+    select(average_rating)%>% 
+  summary()
+books %>%  
+  filter(original_publication_year<
+                 quantile(original_publication_year,probs=.1,na.rm=T) )%>% 
+    select(average_rating)%>% 
+  summary()
+#books <- books %>% 
+#  mutate(title_cleaned = str_trim(str_extract(title, '([0-9a-zA-Z]| |\'|,|\\.|\\*)*')),
+#         title_length = str_count(title_cleaned, " ") + 1) 
+#tmp <- books %>% 
+#  group_by(title_length) %>% 
+#  dplyr::summarize(n = n()) %>% 
+#  mutate(ind = rank(title_length))
+books %>%  
+  filter(original_publication_year> quantile(original_publication_year,probs=.7,na.rm=T) )%>%
+  ggplot(aes((original_publication_year), average_rating, color=factor(original_publication_year), group=original_publication_year)) +
+  geom_boxplot() + guides(color = FALSE) + labs(x = "ratings by year original publication") 
+```
+Summary of newest and oldest. A slight upvote for 2016. Data has only a few points for 2017. Then a downwave at 15 & 14. Idk why. Anyway this type of attack is probably fine because it helps the industry by making it more lucrative for investors. 
+However, shilling, promote, attacks and nuke bury anchor demote attacks are a problem. Even basic user-user similarity will not easily fall for these because user will likely vote down a promotion attack and resposible shill accounts will become ignored. I think an example of this is overhypedness of Dan Brown's the Da Vinci Code caused a backlash. At least the shills would need to rate well most of the time so a few shill promoted items would get in, but only a few. Even if most of the dataset was composed of shills, they would compete to provide good ratings so that their ratings influence the algorithm more.
+Bury attacks against popular items create very high spread in ratings. Twighlight illustrates this even if the ratings are honest opinions. Bury attacks against unknown items could only be countered by someone with good reputation promoting or defending these items. If user of recommender knew of one buried item and voted it highly that would just counter the possibly very few shills attacking this specific item.
+Users need to continuosly rate in reaction to what they are recommended as well as at least a few rare items they liked. Plenty of papers on attack resistant algorithms means some will be added.
+```{r}
+
+```
+An example of an attack on Item-item recs: https://www.youtube.com/watch?v=RZAUBBmhKFU.
+
+
+
+#### Series of items
+The data contains information in the `title` column about whether a certain item is part of a series (e.g. the Lord of the Rings trilogy).
+
+```{r}
+books %>% 
+  filter(str_detect(str_to_lower(title), '\\(the lord of the rings')) %>% 
+  select(item_id, title, average_rating) %>% 
+  datatable(class="nowrap hover row-border", options = list(dom = 't',scrollX = TRUE, autoWidth = TRUE))
+```
+<br>
+
+Given this, we can extract the series from the `title`, as it is always given in parantheses. We can then calculate features like the number of volumes in a series, and so forth. 
+
+Below, I examine whether items which are part of a larger series receive a higher rating. In fact the more volumes are in a series, the higher the average rating is.  
+
+```{r}
+books <- books %>% 
+  mutate(series = str_extract(title, "\\(.*\\)"), 
+         series_number = as.numeric(str_sub(str_extract(series, ', #[0-9]+\\)$'),4,-2)),
+         series_name = str_sub(str_extract(series, '\\(.*,'),2,-2))
+
+tmp <- books %>% 
+  filter(!is.na(series_name) & !is.na(series_number)) %>% 
+  group_by(series_name) %>% 
+  summarise(number_of_volumes_in_series = n(), mean_rating = mean(average_rating))
+  
+tmp %>% 
+  ggplot(aes(number_of_volumes_in_series, mean_rating)) + stat_bin_hex(bins = 50) + scale_fill_distiller(palette = "Spectral") +
+  stat_smooth(method = "lm", se = FALSE, size = 2, color = "orchid") +
+  annotate("text", x = 35, y = 3.95, label = get_cor(data.frame(x = tmp$mean_rating,  y = tmp$number_of_volumes_in_series)), color = "orchid", size = 7, parse = TRUE)
+
+```
+
+#### Is the sequel better than the original?
+We can also see that within a series, in fact the sequel is rated slightly better than the original. 
+```{r, fig.width=4, fig.height=5}
+books %>% 
+  filter(!is.na(series_name) & !is.na(series_number) & series_number %in% c(1,2)) %>% 
+  group_by(series_name, series_number) %>% 
+  summarise(m = mean(average_rating)) %>% 
+  ungroup() %>% 
+  group_by(series_name) %>% 
+  mutate(n = n()) %>% 
+  filter(n == 2) %>% 
+  ggplot(aes(factor(series_number), m, color = factor(series_number))) +
+  geom_boxplot() + coord_cartesian(ylim = c(3,5)) + guides(color = FALSE) + labs(x = "Volume of series", y = "Average rating") 
+
+```
+
+#### How long should a title be? 
+If you are an author, one of the most important choices is the title of a item. Of course the content of the title is important. However, it might also matter how long the title is. Below I therefore plot the average rating as a function of the length of the title (in words). We can see that there is in fact some variation in average rating depending on title length. Titles with 3 or 7 words seem to have slightly higher ratings. 
+
+```{r }
+books <- books %>% 
+  mutate(title_cleaned = str_trim(str_extract(title, '([0-9a-zA-Z]| |\'|,|\\.|\\*)*')),
+         title_length = str_count(title_cleaned, " ") + 1) 
+
+tmp <- books %>% 
+  group_by(title_length) %>% 
+  dplyr::summarize(n = n()) %>% 
+  mutate(ind = rank(title_length))
+
+books %>% 
+  ggplot(aes(factor(title_length), average_rating, color=factor(title_length), group=title_length)) +
+  geom_boxplot() + guides(color = FALSE) + labs(x = "Title length") + coord_cartesian(ylim = c(2.2,4.7)) + geom_text(aes(x = ind,y = 2.25,label = n), data = tmp)
+```
+
+#### Does having a subtitle improve the item's rating?
+We see that items that have a subtitle get rated slightly higher than items without a subtitle. 
+
+```{r, fig.width=4, fig.height=5}
+books <- books %>% 
+  mutate(subtitle = str_detect(books$title, ':') * 1, subtitle = factor(subtitle))
+
+books %>% 
+  ggplot(aes(subtitle, average_rating, group = subtitle, color = subtitle)) + 
+  geom_boxplot() + guides(color = FALSE)
+
+```
+
+#### Does the number of authors matter?
+
+We all know the saying: "too many cooks spoil the broth."
+Is this also true for items? Looking at the plot below it seems to be exactly the opposite: The more authors a item has the higher is its average rating. 
+
+```{r}
+books <- books %>% 
+  group_by(item_id) %>% 
+  mutate(number_of_authors = length(str_split(authors, ",")[[1]]))
+
+books %>% filter(number_of_authors <= 10) %>% 
+  ggplot(aes(number_of_authors, average_rating)) + stat_bin_hex(bins = 50) + scale_fill_distiller(palette = "Spectral") +
+  stat_smooth(method = "lm", size = 2, color = "orchid", se = FALSE) + 
+  annotate("text", x = 8.5, y = 2.75, label = get_cor(data.frame(x = books$number_of_authors, y = books$average_rating)), color = "orchid", size = 7, parse = TRUE)
+```
+
+
+
+### Summary - Part I
+We identified some interesting aspects of this item datasets. In summary, observed effects on item rating are rather small, suggesting that item rating is mainly driven by other aspects, hopefully including the quality of the item itself. 
+In part II we are going to look at collaborative filtering and eventually build a recommender app in shiny in part III.
+
+#### Ratings.csv
+```{r, result='asis', echo=FALSE}
+datatable(head(ratings, 10), class = "nowrap hover row-border", options = list(dom = 't',scrollX = FALSE, autoWidth = TRUE))
+```
+
+<br>
+```{r, echo=FALSE}
+glimpse(ratings)
+```
+
+#### Books.csv
+```{r, result='asis', echo=FALSE}
+datatable(head(books,5),  class = "nowrap hover row-border", options = list(dom = 't',scrollX = TRUE, autoWidth=TRUE, columnDefs = list(list(width = '200px', targets = c(8)),list(width = '300px', targets = c(10,11)))))
+```
+<br>
+```{r, echo=FALSE}
+glimpse(books)
+unique(books$language_code)
+```
+
+#### item_tags.csv
+```{r, result='asis', echo=FALSE}
+datatable(head(item_tags, 10), class = "nowrap hover row-border", options = list(dom = 't',scrollX = FALSE, autoWidth = TRUE))
+```
+
+<br>
+```{r, echo=FALSE}
+glimpse(item_tags)
+```
+
+#### Tags.csv
+```{r, result='asis', echo=FALSE}
+datatable(sample_n(tags, 10), class = "nowrap hover row-border", options = list(dom = 't',scrollX = FALSE, autoWidth = TRUE))
+```
+
+<br>
+```{r, echo=FALSE}
+glimpse(tags)
+```
+<br>
+
+#### Have a look at the dataset {.tabset}
+
+First, let's have a look at the dataset. It consists of the files: `ratings.csv`, `books.csv`, `item_tags.csv`, `tags.csv`.  
+
+As the name suggests `ratings.csv` contains all users's ratings of the items (a total of 980k ratings, for 10,000 items, from 53,424 users), while `books.csv` contains more information on the items such as author, year, etc. `item_tags` contains all tag_ids users have assigned to that items and corresponding tag_counts, while `tags.csv` contains the tag_names corresponding to the tag_ids. 
+
+These two files are linked by the items' ids. 
+
+#### Ratings.csv
+```{r, result='asis', echo=FALSE}
+datatable(head(ratings, 10), class = "nowrap hover row-border", options = list(dom = 't',scrollX = FALSE, autoWidth = TRUE))
+```
+
+<br>
+```{r, echo=FALSE}
+glimpse(ratings)
+```
+
+#### Books.csv
+```{r, result='asis', echo=FALSE}
+datatable(head(books,5),  class = "nowrap hover row-border", options = list(dom = 't',scrollX = TRUE, autoWidth=TRUE, columnDefs = list(list(width = '200px', targets = c(8)),list(width = '300px', targets = c(10,11)))))
+```
+<br>
+```{r, echo=FALSE}
+glimpse(books)
+unique(books$language_code)
+```
+
+#### item_tags.csv
+```{r, result='asis', echo=FALSE}
+datatable(head(item_tags, 10), class = "nowrap hover row-border", options = list(dom = 't',scrollX = FALSE, autoWidth = TRUE))
+```
+
+<br>
+```{r, echo=FALSE}
+glimpse(item_tags)
+```
+
+#### Tags.csv
+```{r, result='asis', echo=FALSE}
+datatable(sample_n(tags, 10), class = "nowrap hover row-border", options = list(dom = 't',scrollX = FALSE, autoWidth = TRUE))
+```
+
+<br>
+```{r, echo=FALSE}
+glimpse(tags)
+```
+<br>
+
+
+

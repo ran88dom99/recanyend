@@ -1,0 +1,430 @@
+---
+title: "user collab with PCA and maybe recommenderlab"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+#plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+### Read in the data
+We start by loading some libraries and reading in the two data files.
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(recommenderlab)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(DT)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(corrplot)
+library(qgraph)
+library(methods)
+library(Matrix)
+
+input.folder<-"badbooks"
+output.name<-paste(input.folder,"4",sep = "") ###only after selection
+books <- fread(paste(input.folder,'/item_content.csv',sep = ""))
+ratings <- fread(paste(input.folder,'/ratings.csv',sep = ""))
+item_tags <- fread(paste(input.folder,'/item_tags.csv',sep = ""))
+tags <- fread(paste(input.folder,'/tags.csv',sep = ""))
+
+#books <- fread('../books.csv')
+#ratings <- fread('../ratings.csv')
+#book_tags <- fread('../book_tags.csv')
+#tags <- fread('../tags.csv')
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+
+
+So let's first remove the duplicate ratings. 
+```{r}
+ratings[, N := .N, .(user_id, item_id)]
+
+## corresponding dplyr code
+# ratings %>% group_by(user_id, item_id) %>% mutate(n=n())
+cat('Number of duplicate ratings: ', nrow(ratings[N > 1]))
+ratings <- ratings[N == 1]
+
+```
+
+And then let's remove users who rated fewer than 5 books. 
+```{r}
+ratings[, N := .N, .(user_id)]
+ratings[, B := .N, .(item_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than 5 books: ', uniqueN(ratings[N <= 5, user_id]))
+ratings <- ratings[N > 5]
+cat('Number of book who rated fewer than 5 books: ', uniqueN(ratings[B <= 5, item_id]))
+ratings <- ratings[B > 5]
+cat('Number of users who rated fewer than 5 books g: ', uniqueN(ratings[N <= 5, user_id]))
+ratings <- ratings[N > 5]
+cat('Number of book who rated fewer than 5 books g: ', uniqueN(ratings[B <= 5, item_id]))
+ratings <- ratings[B > 5]
+glimpse(ratings)
+length(unique(ratings$item_id))
+length(unique(ratings$user_id))
+```
+
+Setup to remove users have nearly nothing in common with target user. 
+```{r}
+ratings[, Bmean := mean(rating), .(item_id)]
+ratings[, MisMean := signif(rating-Bmean,digits = 3),]
+ratings[, shadow := 1,] # then use shadow numbers instead of rating for matix
+
+glimpse(ratings)
+ot.use.touch <- ratings[,
+        .(sum(B)),
+        by = .(user_id)]
+bk.ct.b.use <- ratings[,
+        .(.N),
+        by = .(user_id)]
+glimpse(ot.use.touch)
+glimpse(bk.ct.b.use)
+summary(ot.use.touch)
+#ratings[, M := .(mean()), .(item_id)]
+#book.mean <- ratings[,
+ #       .(mean()),
+#        by = .(item_id)]
+```
+
+```{r}
+# Generate the plot.
+
+p01 <- ot.use.touch %>%
+  #dplyr::select(V1) %>%
+  ggplot2::ggplot(ggplot2::aes(x=V1)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::xlab("V1\n\nRattle 2018-Mar-15 20:49:55 John") +
+  ggplot2::ggtitle("Distribution of V1") +
+  ggplot2::labs(y="Density")
+
+# Display the plots.
+
+gridExtra::grid.arrange(p01)
+```
+```{r}
+# Generate the plot.
+
+p01 <- bk.ct.b.use %>%
+  #dplyr::select(V1) %>%
+  ggplot2::ggplot(ggplot2::aes(x=N)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::xlab("N\n\nRattle 2018-Mar-15 20:49:55 John") +
+  ggplot2::ggtitle("Distribution of N") +
+  ggplot2::labs(y="Density")
+
+# Display the plots.
+
+gridExtra::grid.arrange(p01)
+```
+
+
+pick the target user
+```{r}
+set.seed(1)
+users <- unique(ratings$user_id)
+max(users==17329)
+ot.use.touch[ot.use.touch$user_id==17329]
+identical(ot.use.touch$user_id,users)
+summary(sele.usr<-ot.use.touch$V1>750000)
+head(sele.usr)
+ot.use.touch[3]
+bk.ct.b.use[3]
+```
+Now that we have selected a user lets remove all books not rated by user.
+```{r}
+userated<-ratings[user_id==4]
+glimpse(userated)
+thisway<-(ratings$item_id %in% userated$item_id)
+summary(thisway)
+useable.rats<-ratings[thisway]
+glimpse(useable.rats)
+```
+
+
+And then let's pick number for number of users to remove.
+```{r}
+useable.rats[, N := .N, .(user_id)]
+useable.rats[, B := .N, .(item_id)]
+summary(useable.rats$N)
+# Generate the plot.
+#with(useable.rats, qqPlot(N, dist="norm", id.method="y", id.n=2, 
+#  labels=rownames(useable.rats)))
+
+p01 <- useable.rats %>%
+  #dplyr::select(V1) %>%
+  ggplot2::ggplot(ggplot2::aes(x=N)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::xlab("N\n\nRattle 2018-Mar-15 20:49:55 John") +
+  ggplot2::ggtitle("Distribution of Books rated count by user") +
+  ggplot2::labs(y="Density")
+
+# Display the plots.
+
+gridExtra::grid.arrange(p01)
+
+# Generate just the data for an Ecdf plot of the variable 'N'.
+
+ds <- rbind(data.frame(dat=useable.rats[user_id!=4,N], grp="All"))
+
+# The 'Hmisc' package provides the 'Ecdf' function.
+
+library(Hmisc, quietly=TRUE)
+
+# Plot the data.
+
+Ecdf(ds[ds$grp=="All",1], col="#E495A5", xlab="N", lwd=2, ylab=expression(Proportion <= x), subtitles=FALSE)
+
+
+```
+Pick the specific number.
+```{r}
+## corresponding dplyr code
+# useable.rats %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than 20 books: ', uniqueN(useable.rats[N <= 20, user_id]))
+useable.rats <- useable.rats[N > 20]
+```
+```{r}
+#dimension_names <- list(user_id = sort(unique(useable.rats$user_id)), item_id = sort(unique(useable.rats$item_id)))
+#ratingmat <- spread(select(useable.rats, item_id, user_id, rating), item_id, rating) %>% select(-user_id)
+
+#ratingmat <- as.matrix(ratingmat)
+#dimnames(ratingmat) <- dimension_names
+#ratingmat[1:5, 1:5]
+#dim(ratingmat)
+```
+```{r}
+useable.rats[, N := .N, .(user_id)]
+useable.rats[, B := .N, .(item_id)]
+useable.rats[, rankuser := frank(user_id,ties.method="dense"),]
+useable.rats[, rankbook := frank(item_id,ties.method="dense"),]
+cat('Number of book who rated fewer than 5 books g: ', uniqueN(useable.rats[B <= 5, item_id]))
+useable.rats <- useable.rats[B > 5]
+glimpse(useable.rats)
+ot.use.touch2 <- useable.rats[,
+        .(sum(B)),
+        by = .(user_id)]
+bk.ct.b.use2 <- useable.rats[,
+        .(.N),
+        by = .(user_id)]
+ 
+#useable.rats <- useable.rats[user_id != 4]
+#summary(bk.ct.b.use2)
+#summary(ot.use.touch2)
+length(unique(useable.rats$user_id))
+length(unique(useable.rats$item_id))
+length((useable.rats$item_id))
+summary(useable.rats$B)
+useable.rats[1]
+max(useable.rats$item_id)
+max(useable.rats$user_id)
+max(useable.rats$rankbook)
+```
+Second attempt.
+```{r}
+library(Matrix);library(irlba)
+set.seed(42)
+#rows <- 500000
+#cols <- 10000
+#i <- unlist(lapply(1:rows, function(i) rep(i, sample(1:5,1))))
+#j <- sample(1:cols, length(i), replace=TRUE)
+#M <- sparseMatrix(i, j)
+#SM<-sparseMatrix(ratings$user_id,ratings$item_id,x=ratings$rating)
+SM<-sparseMatrix(useable.rats$rankuser,useable.rats$rankbook,
+                x=useable.rats$MisMean)
+str(SM)
+str(SM[-2,])
+#summary(SM)
+length(unique(SM@i));max(SM@i)
+SM@p
+SM
+SM[-2,]
+```
+```{r}
+rm(books, ratings,bk.ct.b.use,bk.ct.b.use2,
+   ot.use.touch,ot.use.touch2)
+gc()
+```
+,useable.rats
+```{r}
+#useable.rats$item_id
+ set.seed(1)
+ p1 <- prcomp_irlba(SM[-2,], n=60)
+ summary(p1)
+ str(p1)#ratings[user_id==4,,]
+ #data.table(SM[2,],p1$rotation)
+ write.table( data.table(SM[2,],p1$rotation),file = "4thbookrcentPCA.csv",quote = F,sep = ",",row.names = F ,col.names = F)
+```
+########################## Using recommenderlab
+
+Recommenderlab is a R-package that provides the infrastructure to evaluate and compare several collaborative-filtering algortihms. 
+Many algorithms are already implemented in the package, and we can use the available ones to save some coding effort, or add custom algorithms and use the infrastructure (e.g. crossvalidation).
+
+There is an important aspect concerning the representation of our rating matrix. 
+As we could already see above, most of the values in the rating matrix are missing, because every user just rated a few of the 10000 books. This allows us to represent this matrix is sparse format in order to save memory.
+
+To restructure our rating data from this dataset in the same way, we can do the following:
+```{r}
+dimension_names <- list(user_id = sort(unique(useable.rats$user_id)), item_id = sort(unique(useable.rats$item_id)))
+ratingmat <- spread(select(useable.rats, item_id, user_id, rating), item_id, rating) %>% select(-user_id)
+
+ratingmat <- as.matrix(ratingmat)
+dimnames(ratingmat) <- dimension_names
+ratingmat[1:5, 1:5]
+dim(ratingmat)
+```
+```{r ,results='hide', message=FALSE, warning=FALSE}
+ratingmat0 <- ratingmat
+ratingmat0[is.na(ratingmat0)] <- 0
+sparse_ratings <- as(ratingmat0, "sparseMatrix")
+rm(ratingmat0)
+gc()
+```
+
+Recommenderlab uses as special variant of a sparse matrices, so we convert to this class first.
+```{r}
+
+real_ratings <- new("realRatingMatrix", data = SM)
+unreal_ratings <- new("realRatingMatrix", data = sparse_ratings)
+str(SM)
+str(real_ratings)
+str(unreal_ratings)
+identical(real_ratings,unreal_ratings)
+```
+
+Running an algorithm in Recommenderlab is really easy. All you have to do is call `Recommender()` and pass the data, select a method ("UBCF" - user-based collaborative filtering) and pass some params (e.g., the *method* for calculating similarity, e.g. *pearson*, and the number of most similar users used for the predictions, *nn*, e.g. 4).
+
+```{r}
+model <- Recommender(real_ratings, method = "UBCF", param = list(method = "pearson", nn = 4))
+```
+
+Creating predictions is then also straight-forward. You just call `predict()` and pass the model, the ratings for the user you want to predict ratings for, and a parameter to tell the function that you want to get predicted ratings back. 
+
+```{r}
+#Making predictions 
+prediction <- predict(model, real_ratings[current_user, ], type = "ratings")
+```
+
+Let's have a look at the best predictions for David:
+```{r}
+as(prediction, 'data.frame') %>% 
+  arrange(-rating) %>% .[1:5,] %>% 
+  mutate(item_id = as.numeric(as.character(item))) %>% 
+  left_join(select(books, authors, title, item_id), by = "item_id") %>% 
+  select(-item) %>% 
+  datatable(class = "nowrap hover row-border", escape = FALSE, options = list(dom = 't',scrollX = TRUE, autoWidth = TRUE))  
+```
+<br>   
+
+We see that recommendations are nearly the same compared to our basic algorithm described above. The top 4 recommended books are exactly the same ones. 
+
+
+#### More advanced ideas
+
+The procedure shown above is a quite simple process. You can do other smart things to improve the algorithm:  
+
+1. Instead of simply averaging the predictions of the similar users you can weight the ratings by similarity. This means that the more similar a user is to the current user the more weight his/her ratings receive in the calculation of the predictions.  
+
+2. The similarity calculation can also be weighted, according to how many books users co-rated. The more books users co-rated the more reliable is their similarity score.
+
+
+#### Evaluating the predictions
+
+The good thing about `Recommenderlab` is that it offers the possibility to easily evaluate and compare algorithms. In order to do so, one first has to create an evaluation scheme. Here, as an illustration I chose to do 10-fold crossvalidation. The *given* parameter determines how many ratings are given to create the predictions and in turn on how many predictions per user remain for the evaluation of the prediction. In this case -1 means that the predictions are calculated from all but 1 ratings, and performance is evaluated for 1  for each user. 
+
+```{r}
+scheme <- evaluationScheme(real_ratings[,], method = "cross-validation", k = 10, given = -1, goodRating = 5)
+```
+
+In a second step, we can list all the algorithms we want to compare. As we have a tuneable parameter `nn`, which is the number of most similar users which are used to calculate the predictions. I vary this parameter from 5 to 50 and plot the RMSE. Furthermore, as a baseline one can also add an algorithm ("RANDOM") that randomly predicts a rating for each user.  
+
+```{r nn-comparison, warning=FALSE, message=FALSE}
+algorithms <- list("random" = list(name = "RANDOM", param = NULL),
+                   "UBCF_05" = list(name = "UBCF", param = list(nn = 5, method = "Pearson")),
+                   "UBCF_10" = list(name = "UBCF", param = list(nn = 10, method = "Pearson")),
+                   "UBCF_30" = list(name = "UBCF", param = list(nn = 300, method = "Pearson")),                   
+                   "UBCF_50" = list(name = "UBCF", param = list(nn = 50, method = "Pearson"))
+                   )
+# evaluate the alogrithms with the given scheme            
+results <- evaluate(scheme, algorithms, type = "ratings")
+```
+
+```{r}
+results
+# restructure results output
+tmp <- lapply(results, function(x) slot(x, "results"))
+res <- tmp %>% 
+  lapply(function(x) unlist(lapply(x, function(x) unlist(x@cm[ ,"RMSE"])))) %>% 
+  as.data.frame() %>% 
+  gather(key = "Algorithm", value = "RMSE")
+
+res %>% 
+  ggplot(aes(Algorithm, RMSE, fill = Algorithm)) +
+  geom_bar(stat = "summary") + geom_errorbar(stat = "summary", width = 0.3, size = 0.8) +
+  coord_cartesian(ylim = c(0.6, 1.3)) + guides(fill = FALSE)
+```
+
+
+
+First, we can see that all algorithms perform better than chance. Second we can see, that RMSE decreases with increasing number of nearest neighbours `nn`.
+
+
+### Different algorithms
+It is also possible to compare the performace of different algorithms. The following algorithms are available:
+
+```{r}
+recommenderRegistry$get_entry_names()
+```
+
+You can get more information about these algorithms:
+```{r, eval = FALSE}
+recommenderRegistry$get_entries(dataType = "realRatingMatrix")
+```
+
+Here I compare UBCF with two additional algorithms, "popular" predicts ratings accoring to their mean_rating, SVD is matrix factorization approach. 
+
+```{r algorithm-comparison, fig.width=5}
+scheme <- evaluationScheme(real_ratings, method = "cross-validation", k = 10, given = -1, goodRating = 5)
+
+algorithms <- list("random" = list(name = "RANDOM", param = NULL),
+                   "popular" = list(name = "POPULAR"),
+                   
+                   "SVD" = list(name = "SVD")
+                   )#"UBCF" = list(name = "UBCF"),
+                   
+results <- evaluate(scheme, algorithms, type = "ratings", progress = FALSE)
+
+# restructure results output
+tmp <- lapply(results, function(x) slot(x, "results"))
+res <- tmp %>% 
+  lapply(function(x) unlist(lapply(x, function(x) unlist(x@cm[ ,"RMSE"])))) %>% 
+  as.data.frame() %>% 
+  gather(key = "Algorithm", value = "RMSE")
+
+res %>% 
+  mutate(Algorithm=factor(Algorithm, levels = c("random", "popular", "UBCF", "SVD"))) %>%
+  ggplot(aes(Algorithm, RMSE, fill = Algorithm)) + geom_bar(stat = "summary") + 
+  geom_errorbar(stat = "summary", width = 0.3, size = 0.8) + coord_cartesian(ylim = c(0.6, 1.3)) + 
+  guides(fill = FALSE)
+```
+
+### Summary Part II
+In collaborative filtering the main idea is to use ratings from similar users to create recommendations. The basic algorithm is easy to implement by hand, but there are some packages like Recommenderlab greatly simplyfying your work. 
+

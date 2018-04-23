@@ -1,0 +1,323 @@
+---
+title: "User based Book Recommender"
+subtitle: "Exploratory Analysis & Collaborative Filtering & Shiny App"
+output:
+html_document:
+theme: cosmo
+---
+
+Have you ever wondered which book to read next? I often have and to me, book recommendations are a fascinating issue.
+This external dataset allows us to take a deeper look at data-driven book recommendations.
+THIS IS JUST SELECTION AND IMPUTATION
+
+Let's go.
+
+## Part I: Exploratory Analysis 
+
+### Read in the data
+We start by loading some libraries and reading in the two data files.
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(recommenderlab)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(DT)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(corrplot)
+library(qgraph)
+library(methods)
+library(Matrix)
+
+books <- fread('../books.csv')
+ratings <- fread('../ratings.csv')
+#book_tags <- fread('../book_tags.csv')
+#tags <- fread('../tags.csv')
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+
+
+So let's first remove the duplicate ratings. 
+```{r}
+ratings[, N := .N, .(user_id, book_id)]
+
+## corresponding dplyr code
+# ratings %>% group_by(user_id, book_id) %>% mutate(n=n())
+cat('Number of duplicate ratings: ', nrow(ratings[N > 1]))
+ratings <- ratings[N == 1]
+
+```
+
+And then let's remove users who rated fewer than 5 books. 
+```{r}
+ratings[, N := .N, .(user_id)]
+ratings[, B := .N, .(book_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than 5 books: ', uniqueN(ratings[N <= 5, user_id]))
+ratings <- ratings[N > 5]
+cat('Number of book who rated fewer than 5 books: ', uniqueN(ratings[B <= 5, book_id]))
+ratings <- ratings[B > 5]
+cat('Number of users who rated fewer than 5 books g: ', uniqueN(ratings[N <= 5, user_id]))
+ratings <- ratings[N > 5]
+cat('Number of book who rated fewer than 5 books g: ', uniqueN(ratings[B <= 5, book_id]))
+ratings <- ratings[B > 5]
+glimpse(ratings)
+length(unique(ratings$book_id))
+length(unique(ratings$user_id))
+```
+
+Setup to remove users have nearly nothing in common with target user. 
+```{r}
+ratings[, Bmean := mean(rating), .(book_id)]
+ratings[, MisMean := signif(rating-Bmean,digits = 3),]
+ratings[, shadow := 1,] # then use shadow numbers instead of rating for matix
+
+glimpse(ratings)
+ot.use.touch <- ratings[,
+        .(sum(B)),
+        by = .(user_id)]
+bk.ct.b.use <- ratings[,
+        .(.N),
+        by = .(user_id)]
+glimpse(ot.use.touch)
+glimpse(bk.ct.b.use)
+summary(ot.use.touch)
+#ratings[, M := .(mean()), .(book_id)]
+#book.mean <- ratings[,
+ #       .(mean()),
+#        by = .(book_id)]
+```
+
+```{r}
+# Generate the plot.
+
+p01 <- ot.use.touch %>%
+  #dplyr::select(V1) %>%
+  ggplot2::ggplot(ggplot2::aes(x=V1)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::xlab("V1\n\nRattle 2018-Mar-15 20:49:55 John") +
+  ggplot2::ggtitle("Distribution of V1") +
+  ggplot2::labs(y="Density")
+
+# Display the plots.
+
+gridExtra::grid.arrange(p01)
+```
+```{r}
+# Generate the plot.
+
+p01 <- bk.ct.b.use %>%
+  #dplyr::select(V1) %>%
+  ggplot2::ggplot(ggplot2::aes(x=N)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::xlab("N\n\nRattle 2018-Mar-15 20:49:55 John") +
+  ggplot2::ggtitle("Distribution of N") +
+  ggplot2::labs(y="Density")
+
+# Display the plots.
+
+gridExtra::grid.arrange(p01)
+```
+
+
+pick the target user
+```{r}
+set.seed(1)
+users <- unique(ratings$user_id)
+max(users==17329)
+ot.use.touch[ot.use.touch$user_id==17329]
+identical(ot.use.touch$user_id,users)
+summary(sele.usr<-ot.use.touch$V1>750000)
+head(sele.usr)
+ot.use.touch[3]
+bk.ct.b.use[3]
+```
+Now that we have selected a user lets remove all books not rated by user.
+```{r}
+userated<-ratings[user_id==4]
+glimpse(userated)
+thisway<-(ratings$book_id %in% userated$book_id)
+summary(thisway)
+useable.rats<-ratings[thisway]
+glimpse(useable.rats)
+```
+
+
+And then let's pick number for number of users to remove.
+```{r}
+useable.rats[, N := .N, .(user_id)]
+useable.rats[, B := .N, .(book_id)]
+summary(useable.rats$N)
+# Generate the plot.
+#with(useable.rats, qqPlot(N, dist="norm", id.method="y", id.n=2, 
+#  labels=rownames(useable.rats)))
+
+p01 <- useable.rats %>%
+  #dplyr::select(V1) %>%
+  ggplot2::ggplot(ggplot2::aes(x=N)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::xlab("N\n\nRattle 2018-Mar-15 20:49:55 John") +
+  ggplot2::ggtitle("Distribution of Books rated count by user") +
+  ggplot2::labs(y="Density")
+
+# Display the plots.
+
+gridExtra::grid.arrange(p01)
+
+# Generate just the data for an Ecdf plot of the variable 'N'.
+
+ds <- rbind(data.frame(dat=useable.rats[,N], grp="All"))
+
+# The 'Hmisc' package provides the 'Ecdf' function.
+
+library(Hmisc, quietly=TRUE)
+
+# Plot the data.
+
+Ecdf(ds[ds$grp=="All",1], col="#E495A5", xlab="N", lwd=2, ylab=expression(Proportion <= x), subtitles=FALSE)
+
+
+```
+Pick the specific number.
+```{r}
+## corresponding dplyr code
+# useable.rats %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than 20 books: ', uniqueN(useable.rats[N <= 20, user_id]))
+useable.rats <- useable.rats[N > 20]
+
+
+useable.rats[, N := .N, .(user_id)]
+useable.rats[, B := .N, .(book_id)]
+cat('Number of book who rated fewer than 5 books g: ', uniqueN(ratings[B <= 5, book_id]))
+ratings <- ratings[B > 5]
+glimpse(useable.rats)
+ot.use.touch2 <- useable.rats[,
+        .(sum(B)),
+        by = .(user_id)]
+bk.ct.b.use2 <- useable.rats[,
+        .(.N),
+        by = .(user_id)]
+
+summary(bk.ct.b.use2)
+summary(ot.use.touch2)
+
+```
+check for your own ratings and best friends!
+```{r}
+uquserat<-unique(useable.rats$user_id)
+l.uquserat<-length(uquserat)
+#userated$rating ; userated$MisMean
+correlsp<-vector(mode = 'double',length = max(uquserat))
+for(i in uquserat){
+  forcor<-merge(userated[,c('book_id','Bmean','MisMean','rating')],
+                useable.rats[user_id==i,c('book_id','MisMean','rating')],
+                by='book_id',all=T)
+  misrates<-is.na(forcor$rating.y)
+  forcor$MisMean.y[misrates]<-0
+  forcor$rating.y[misrates]<-forcor$Bmean[misrates]
+  correlsp[i]=min(cor.test( forcor$MisMean.x, forcor$MisMean.y,conf.level = .95)$conf.int)
+}
+summary(correlsp)
+```
+see how many friends you have? and what they recommend?
+```{r}
+cororder<-order(correlsp, decreasing = T)
+correlsp[cororder[200:300]]
+#useable.rats[user_id %in% cororder[1:20]]
+recc<-ratings[user_id %in% cororder[2:230],.(mean(MisMean)),.(book_id)]
+reccorder<-order(recc$V1, decreasing = T)
+recc[reccorder[1200:1220]]
+```
+```{r}
+compare<-merge(useable.rats[user_id==4],recc,by='book_id',all=T)
+#compare[user_id==4,c('rating','V1')][1:134]
+cor.test(compare$MisMean,compare$V1)
+RMSE(compare$MisMean,compare$V1)
+vecmean<-vector()
+for(i in 1:134){ vecmean[i]<-mean(compare$MisMean, na.rm=T)}
+cor.test(userated$MisMean,vecmean)
+RMSE(userated$MisMean,vecmean)
+cor.test(compare$MisMean,compare$V1)
+cor.test(ratings[user_id==4]$rating,ratings[user_id==4]$Bmean)
+cor.test(ratings[user_id==4]$rating,ratings[user_id==4]$MisMean)
+cor.test(ratings[user_id==4]$Bmean,ratings[user_id==4]$MisMean)
+glimpse(ratings)
+str(ratings[user_id==4,'rating'])
+```
+```{r}
+library(Matrix)
+ratings
+res <- prcomp(Xt, center = TRUE, scale = FALSE)
+plot(cumsum(res$sdev^2/sum(res$sdev^2))) #cumulative explained variance
+```
+Because this matrix has many columns, I would like to reduce its dimensionality to something more manageable. I can use the excellent irlba package to perform SVD and return the first n principal components (5 shown here; I'll probably use 100 or 500 on my actual dataset):
+```{r}
+library(irlba)
+ pc <- M %*% irlba(M, nv=5, nu=0)$v 
+ str(pc)
+```
+
+
+
+
+
+```{r}
+# Generate the plot.
+
+p01 <- ot.use.touch2 %>%
+  #dplyr::select(V1) %>%
+  ggplot2::ggplot(ggplot2::aes(x=V1)) +
+  ggplot2::geom_density(lty=3) +
+  ggplot2::xlab("V1\n\nRattle 2018-Mar-15 20:49:55 John") +
+  ggplot2::ggtitle("Distribution of Touch by user") +
+  ggplot2::labs(y="Density")
+
+# Display the plots.
+
+gridExtra::grid.arrange(p01)
+```
+```{r}
+
+```
+melt spread and butter tuple dataset into matrix
+```{r}
+ratings<-useable.rats
+dimension_names <- list(user_id = sort(unique(ratings$user_id)), book_id = sort(unique(ratings$book_id)))
+if(F){
+  ratingmat <- spread(select(ratings, book_id, user_id, MisMean), book_id, MisMean) %>%     select(-user_id)
+}else{
+  ratingmat <- spread(select(ratings, book_id, user_id, shadow), book_id, shadow) %>% select(-user_id)
+}
+ratingmat <- base::as.matrix(ratingmat)
+dimnames(ratingmat) <- dimension_names
+ratingmat[1:5, 1:5]
+dim(ratingmat)
+```
+Print
+```{r}
+lrm<-length(ratingmat[,1])
+if(T){ratingmat[is.na(ratingmat)]<-0}
+str(ratingmat)
+if(F){ratingmat<-data.table(useable.rats[user_id==4, MisMean], 
+                        ratingmat)
+write.table(t(ratingmat[c(1,3,2,4:lrm),]),file = "4thbookcentqrtshad.csv",quote = F,sep = ",",row.names = F ,col.names = F)
+}else{
+  ratingmat<-data.table(useable.rats[user_id==4, rating], 
+                        ratingmat)
+write.table(t(ratingmat[c(1,3,2,4:lrm),]),file = "4thbookqrtshad.csv",quote = F,sep = ",",row.names = F ,col.names = F)
+}
+write.table(t(ratingmat[c(2,1,3:lrm),]),file = "4thbookcentqrtshad.csv",quote = F,sep = ",",row.names = F ,col.names = F)
+```
+
+```{r}
+rm(books, ratings,useable.rats,bk.ct.b.use,bk.ct.b.use2,ot.use.touch,ot.use.touch2)
+gc()
+```

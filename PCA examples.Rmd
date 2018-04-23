@@ -1,0 +1,204 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+```{r}
+#SparseFactorAnalysis::sfa()
+#Generate data
+m=50
+n=100
+frac.gaps <- 0.5 # the fraction of data with NaNs
+N.S.ratio <- 0.25 # the Noise to Signal ratio for adding noise to data
+
+x <- (seq(m)*2*pi)/m
+t <- (seq(n)*2*pi)/n
+
+#True field
+Xt <- 
+ outer(sin(x), sin(t)) + 
+ outer(sin(2.1*x), sin(2.1*t)) + 
+ outer(sin(3.1*x), sin(3.1*t)) +
+ outer(tanh(x), cos(t)) + 
+ outer(tanh(2*x), cos(2.1*t)) + 
+ outer(tanh(4*x), cos(0.1*t)) + 
+ outer(tanh(2.4*x), cos(1.1*t)) + 
+ tanh(outer(x, t, FUN="+")) + 
+ tanh(outer(x, 2*t, FUN="+"))
+
+Xt <- t(Xt)
+
+#PCA
+res <- prcomp(Xt, center = TRUE, scale = FALSE)
+names(res)
+```
+```{r}
+res$sdev
+length(res$sdev)
+#res$rotation
+dim(res$rotation)
+#res$x
+dim(res$x)
+plot(cumsum(res$sdev^2/sum(res$sdev^2))) #cumulative explained variance
+```
+```{r}
+pc.use <- 3 # explains 93% of variance
+trunc <- res$x[,1:pc.use] %*% t(res$rotation[,1:pc.use])
+
+#and add the center (and re-scale) back to data
+if(res$scale != FALSE){
+	trunc <- scale(trunc, center = FALSE , scale=1/res$scale)
+}
+if(res$center != FALSE){
+    trunc <- scale(trunc, center = -1 * res$center, scale=FALSE)
+}
+dim(trunc); dim(Xt)
+RAN <- range(cbind(Xt, trunc))
+BREAKS <- seq(RAN[1], RAN[2],,100)
+COLS <- rainbow(length(BREAKS)-1)
+par(mfcol=c(1,2), mar=c(1,1,2,1))
+image(Xt, main="Original matrix", xlab="", ylab="", xaxt="n", yaxt="n", breaks=BREAKS, col=COLS)
+box()
+image(trunc, main="Truncated matrix (3 PCs)", xlab="", ylab="", xaxt="n", yaxt="n", breaks=BREAKS, col=COLS)
+box()
+```
+```{r}
+#alternate approach
+Xt.cen <- scale(Xt, center=TRUE, scale=FALSE)
+C <- cov(Xt.cen, use="pair")
+E <- svd(C)
+A <- Xt.cen %*% E$u
+
+#To remove units from principal components (A)
+#function for the exponent of a matrix
+"%^%" <- function(S, power)
+     with(eigen(S), vectors %*% (values^power * t(vectors)))
+Asc <- A %*% (diag(E$d) %^% -0.5) # scaled principal components
+
+#Relationship between eigenvalues from both approaches
+plot(res$sdev^2, E$d) #PCA via a covariance matrix - the eigenvalues now hold variance, not stdev
+abline(0,1) # same results
+```
+
+Second attempt.
+```{r}
+library(Matrix)
+set.seed(42)
+rows <- 500000
+cols <- 10000
+i <- unlist(lapply(1:rows, function(i) rep(i, sample(1:5,1))))
+j <- sample(1:cols, length(i), replace=TRUE)
+M <- sparseMatrix(i, j)
+#SM<-sparseMatrix(ratings$user_id,ratings$book_id,x=ratings$rating)
+SM<-sparseMatrix(useable.rats$user_id,useable.rats$book_id,x=useable.rats$rating)
+```
+Because this matrix has many columns, I would like to reduce its dimensionality to something more manageable. I can use the excellent irlba package to perform SVD and return the first n principal components (5 shown here; I'll probably use 100 or 500 on my actual dataset):
+```{r}
+library(irlba)
+ pc <- SM %*% irlba(SM, nv=5, nu=0)$v 
+ str(pc)
+ pc[1:10,1:5]
+```
+```{r}
+res <- prcomp(SM, center = TRUE, scale = FALSE)
+plot(cumsum(res$sdev^2/sum(res$sdev^2))) #cumulative explained variance
+```
+
+```{r}
+set.seed(1);library(irlba)
+
+A <- matrix(runif(400), nrow=20)
+S <- irlba(A, 3)
+S$d
+str(S)
+# Compare with svd
+SV<-svd(A)
+SV$d[1:3]
+str(SV)
+# Restart the algorithm to compute more singular values
+# (starting with an existing solution S)
+S1 <- irlba(A, 5, v=S)
+
+# Estimate smallest singular values
+irlba(A, 3, smallest=TRUE)$d
+
+#Compare with
+tail(svd(A)$d, 3)
+```
+```{r}
+# Principal components (see also prcomp_irlba)
+P <- irlba(A, nv=1, center=colMeans(A))
+
+# Compare with prcomp and prcomp_irlba (might vary up to sign)
+cbind(P$v,
+      prcomp(A)$rotation[, 1],
+      prcomp_irlba(A)$rotation[, 1])
+
+# A custom matrix multiplication function that scales the columns of A
+# (cf the scale option). This function scales the columns of A to unit norm.
+col_scale <- sqrt(apply(A, 2, crossprod))
+setClass("scaled_matrix", contains="matrix", slots=c(scale="numeric"))
+setMethod("%*%", signature(x="scaled_matrix", y="numeric"),
+   function(x ,y) x@.Data %*% (y / x@scale))
+setMethod("%*%", signature(x="numeric", y="scaled_matrix"),
+   function(x ,y) (x %*% y@.Data) / y@scale)
+a <- new("scaled_matrix", A, scale=col_scale)
+irlba(a, 3)$d
+
+# Compare with:
+svd(sweep(A, 2, col_scale, FUN=`/`))$d[1:3]
+
+```
+
+```{r}
+ set.seed(1)
+ x <- matrix(rnorm(200), nrow=20)
+ p1 <- prcomp_irlba(SM, n=30)
+ summary(p1)
+```
+Importance of components%s:
+PC1 PC2 PC3
+Standard deviation 1.5411 1.2513 1.1916
+Proportion of Variance 0.2806 0.1850 0.1678
+Cumulative Proportion 0.2806 0.4656 0.6334
+```{r}
+# Compare with
+p2 <- prcomp(x, tol=0.7)
+summary(p2)
+```
+Importance of components:
+PC1 PC2 PC3
+Standard deviation 1.5411 1.2513 1.1916
+Proportion of Variance 0.2806 0.1850 0.1678
+Cumulative Proportion 0.2806 0.4656 0.6334
+Alternatively, you can compute principal components directly using the singular value decomposition
+and the center option:
+```{r}
+ p3 <- svd(scale(x, center=colMeans(x), scale=FALSE))
+ p4 <- irlba(x, 3, center=colMeans(x))
+ # compare with prcomp
+ sqrt(crossprod(p1$rotation[,1] - p3$v[,1]))
+
+ sqrt(crossprod(p1$rotation[,1] + p4$v[,1]))
+
+```
+[,1]
+[1,] 9.773228e-13
+[,1]
+[1,] 1.652423e-12
+```{r}
+res <- prcomp(SM, center = TRUE, scale = FALSE)
+plot(cumsum(p1$sdev^2/sum(p1$sdev^2))) #cumulative explained variance
+```

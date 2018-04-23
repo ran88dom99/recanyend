@@ -1,0 +1,110 @@
+---
+title: "Recommender item based info"
+subtitle: "Exploratory Analysis & Collaborative Filtering"
+output:
+html_document:
+theme: cosmo
+---
+
+### Read in the data
+We start by loading some libraries and reading in the two data files.
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(recommenderlab)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(DT)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(corrplot)
+library(qgraph)
+library(methods)
+library(Matrix)
+
+books <- fread('../books.csv')
+ratings <- fread('../ratings.csv')
+#book_tags <- fread('../book_tags.csv')
+#tags <- fread('../tags.csv')
+```
+
+```{r, echo=FALSE}
+glimpse(books)
+#str(books) typeof(books[1,]) %in% c("int","dbl")
+books<-books[,c(1:5,7,9,13:21)]
+glimpse(books)
+books<-books[,-c(2:4,6)]
+glimpse(books)
+```
+So let's first remove the duplicate ratings. 
+```{r}
+ratings[, N := .N, .(user_id, book_id)]
+
+## corresponding dplyr code
+# ratings %>% group_by(user_id, book_id) %>% mutate(n=n())
+cat('Number of duplicate ratings: ', nrow(ratings[N > 1]))
+ratings <- ratings[N == 1]
+glimpse(books)
+```
+And then let's remove users who rated fewer than 5 books. 
+```{r}
+ratings[, N := .N, .(user_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than 1 books: ', uniqueN(ratings[N <= 5, user_id]))
+ratings <- ratings[N > 5]
+ratings[, B := .N, .(book_id)]
+ratings <- ratings[B > 5]
+ratings[, N := .N, .(user_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than 1 books: ', uniqueN(ratings[N <= 5, user_id]))
+ratings <- ratings[N > 5]
+ratings[, B := .N, .(book_id)]
+ratings <- ratings[B > 5]
+glimpse(ratings)
+```
+Aggregate median and many other stats.
+```{r}
+ratings[, Bmean := mean(rating), .(book_id)]
+ratings[, MisMean := signif(rating-Bmean,digits = 3),]
+max(ratings$N)-length(length(unique(ratings$N)))
+max(ratings$B)-length(length(unique(ratings$B)))
+library(stats,quietly = T)
+bookmedian <- ratings[,
+        .(med.bk=median(rating),men.bk=mean(rating),sd.bk=sd(rating),median(rating),median(rating),median(rating)),
+        by = .(book_id)]
+
+glimpse(bookmedian)
+glimpse(books)
+#unbook<-unique(ratings$book_id)
+#unbook<-sort(unbook)
+#length(unbook)==max(unbook)
+```
+merge
+```{r}
+bookmedian2<-merge(books,bookmedian,all=TRUE)
+glimpse(bookmedian)
+bookmedian2[bookmedian2$book_id==8464]
+books[books$book_id==8464]
+bookmedian[bookmedian$book_id==8464]
+bookmedian<-signif(bookmedian2, digits = 3)
+```
+```{r}
+#for(by in bookmedian$book_id){}
+#zippy<-c(1,2,3,4,5)
+#range(zippy)[2]-range(zippy)[1]
+#IQR(zippy)
+```
+```{r}
+userated<-ratings[user_id==4]
+View(userated)
+urbid<-userated$book_id
+#sort(urbid)   use  Bmean or MisMean to norm 
+bookmedian2<-data.table(userated[, list( MisMean)], 
+                        bookmedian2[book_id %in% urbid ])
+View(bookmedian2)
+write.table((bookmedian2[book_id %in% userated$book_id]),file = "4thbookercenterbooks.csv",quote = F,sep = ",",row.names = F ,col.names = F)
+```

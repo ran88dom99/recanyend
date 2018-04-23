@@ -1,0 +1,326 @@
+---
+title: "item Recommender"
+subtitle: "Exploratory Analysis"
+output:
+html_document:
+theme: cosmo
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+Key bindings for collapse all: alt-o
+big problem is involvement and education; Though maybe will be motivating for education. Get dad. Going through the effort is worth while because of the simple shadow-duplication attack where a shill falsely  becomes the most useful looking user by copying target's ratings. Duplication is really only an attack on user-user collaborative filtering. However every other system I-I, content based(whats the best drama) and even dimensionality reduction (unless its somehow incomprehensible) can be attacked. Eh this needs lots of work.
+
+
+poeple should be tagzed and outed 
+unpersonalized recommendations go here imho
+pca, LDA?
+
+better names for a bunch of my code. possibly explanations.
+remove book specificity- column renaming
+duplicates catcher: when I have duplicates to catch
+ 
+### Read in the data
+We start by loading some libraries and reading in the two data files.
+```{r message=FALSE, warning=FALSE, results='hide'}
+
+library(data.table)
+
+input.folder<-"badbooks"
+output.name<-paste(input.folder,"4",sep = "") ###only after selection
+books <- fread(paste(input.folder,'/item_content.csv',sep = ""))
+ratings <- fread(paste(input.folder,'/ratings.csv',sep = ""))
+item_tags <- fread(paste(input.folder,'/item_tags.csv',sep = ""))
+tags <- fread(paste(input.folder,'/tags.csv',sep = ""))
+objects.to.error<-c("books","ratings","item_tags","tags")#vector()
+
+```
+#### check for errors like bad read sort
+```{r}
+for(i in 1:length(objects.to.error)){
+  print(summary(get(objects.to.error[i])))
+  print(apply(get(objects.to.error[i]), 2, function(x) length(unique(x))))
+}
+
+```
+
+
+```{r}
+library(recommenderlab)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(DT)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(corrplot)
+library(qgraph)
+library(methods)
+library(Matrix)
+```
+
+```{r}
+for(i in 1:length(objects.to.error)){
+  (glimpse(get(objects.to.error[i])))
+}
+```
+```{r}
+for(i in 1:length(objects.to.error)){
+ DIY<-(get(objects.to.error[i])) 
+ for(z in 1:length(DIY[1,])){
+  DIY[,z,with=FALSE]%>%
+  group_by_all() %>%
+  tally() %>%
+     arrange(-n) %>%
+  top_n(10)%>%
+     head(30)%>%
+     print()
+ }
+  rm(DIY)
+}
+
+#print
+```
+
+
+
+
+
+
+
+####redo mean sd and popularity for items
+```{r}
+ItemRedo <- ratings[,
+        .(med.I=median(rating),men.I=mean(rating),sd.I=sd(rating),num.I=.N),
+        by = .(item_id)]
+books<-merge(books,ItemRedo,by="item_id",all=TRUE)
+```
+site's means and counts differ from dataset's. Any advanced testing will needto use the recomputed values.
+#### Clean the dataset
+As with nearly any real-life dataset, we need to do some cleaning first. When exploring the data I noticed that for some combinations of user and item there are multiple ratings, while in theory there should only be one (unless users can rate a item several times). Furthermore, for the collaborative filtering in part II it is better to have more ratings per user. So I decided to remove users who have rated fewer than 3 items. 
+
+The data contains nearly 1mio rows, so for this step I found **[data.table](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-intro.html)** to be significantly faster than dplyr. If you have not yet tried it out, I recommend you to do so. It helped me a lot e.g., in the Instacart competition. However, in the rest of this kernel I'll try to use dplyr, as I personally find it easier to read. 
+
+So let's first mean the duplicate ratings.
+```{r}
+ratings[, Ndup := .N, .(user_id, item_id)]
+cat('Number of duplicate ratings: ', nrow(ratings[Ndup > 1]))
+cat('Percent of ratings r duplicate: ', nrow(ratings[Ndup > 1])/nrow(ratings))
+## corresponding dplyr code
+# ratings %>% group_by(user_id, item_id) %>% mutate(n=n())
+if(any(ratings$Ndup>1)){
+dup.ratings<-ratings[Ndup>1]
+dup.ratings[, dupmen := mean(na.rm=T), .(user_id, item_id)]
+summary(dup.ratings$rating)
+dup.ratings$rating<-dup.ratings$dupmen
+summary(dup.ratings$Ndup)
+summary(dup.ratings$rating)
+##too slow but median would be preffered
+#ratings %>% 
+#  group_by(user_id, item_id) %>% 
+#  dplyr::summarize(median_item_user_rating = median(rating))
+#  #example in case I forget
+#dt <-data.table(date=c('d1','d2','d3','d1','d2','d3'),v1=c('a','c','b','a','b','b'),v2=c(2,2,4,2,4,4))
+#dt[, Ndup := .N, .(v1, v2)]
+#dups.dt = dt[!duplicated(dt[, .(date, v1, v2)]) ]
+fwrite(dup.ratings,file=paste(input.folder,'/cduplicates.csv',sep = ""))
+dup.ratings <- dup.ratings[!duplicated(dup.ratings[, .(user_id, item_id)]) ]
+
+ratings <- ratings[Ndup == 1]
+rbind(ratings,dup.ratings)
+rm(dup.ratings)
+}
+```
+
+And then let's remove users who rated fewer than 4 items. 
+```{r}
+ratings[, NU := .N, .(user_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than 4 items: ', uniqueN(ratings[NU <= 3, user_id]))
+ratings <- ratings[NU > 3]
+```
+
+And then let's remove items rated fewer than 4 times. 
+```{r}
+ratings[, NI := .N, .(item_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of items rated fewer than 4 times: ', uniqueN(ratings[NI <= 3, item_id]))
+ratings <- ratings[NI > 3]
+```
+
+
+
+#### What is the distribution of ratings?
+We see that people tend to give quite positive ratings to items. Most of the ratings are in the 3-5 range, while very few ratings are in the 1-2 range. ~ Notice the distributions of ratings of users with more ratings are much closer to bellcurve then those with few. Users with few ratings tend to remeber thair favorites and rate accordingly. You will probably do that too. See Most Popular Items. This is why ratings should not be normalized over user mean. At least not before normalizing for item mean. Amount users overrate or underrate still depends partly on number of items rated as shown in regressions far bellow. Because I like graphs and thouruoghness this is repeated for items. Where its the opposite; implying popularity and ratings correlate. This is contrary to later correlations probably because here compare each rating rather than each user/item. And I don't have the skills to take this further. 
+```{r}
+ratings %>% 
+  ggplot(aes(x = rating, fill = factor(rating))) +
+  geom_bar(color = "grey20") + scale_fill_brewer(palette = "YlGnBu") + 
+  guides(fill = FALSE) 
+summary(ratings$rating)
+
+
+ratings %>%  
+  filter(between(NU,quantile(NU,probs=.9,na.rm=T),max(NU)))%>%  
+  summary(NU) 
+ratings %>%  
+  filter(between(NU,min(NU),quantile(NU,probs=.1,na.rm=T)))%>%  
+  summary(NU)
+ratings %>%  
+  filter(between(NU,quantile(NU,probs=.9,na.rm=T),max(NU)))%>%  
+  ggplot(aes(x = rating, fill = factor(rating))) +
+  geom_bar(color = "grey20") + scale_fill_brewer(palette = "YlGnBu") + 
+  guides(fill = FALSE)+ xlab("ratings of 10% of users with most ratings")
+quantile(ratings$NU,probs=.1,na.rm=T)
+ratings %>%  
+  filter(between(NU,min(NU),quantile(NU,probs=.1,na.rm=T)))%>%  
+  ggplot(aes(x = rating, fill = factor(rating))) +
+  geom_bar(color = "grey20") + scale_fill_brewer(palette = "YlGnBu") +
+  guides(fill = FALSE)+ xlab("ratings of 10% of users with least ratings")
+
+ratings %>%  
+  filter(between(NI,quantile(NI,probs=.9,na.rm=T),max(NI)))%>%  
+  summary(NI) 
+ratings %>%  
+  filter(between(NI,min(NI),quantile(NI,probs=.1,na.rm=T)))%>%  
+  summary(NI)
+ratings %>%  
+  filter(between(NI,quantile(NI,probs=.9,na.rm=T),max(NI)))%>%  
+  ggplot(aes(x = rating, fill = factor(rating))) +
+  geom_bar(color = "grey20") + scale_fill_brewer(palette = "YlGnBu") + 
+  guides(fill = FALSE)+ xlab("ratings of 10% of Items with most ratings")
+quantile(ratings$NI,probs=.1,na.rm=T)
+ratings %>%  
+  filter(between(NI,min(NI),quantile(NI,probs=.1,na.rm=T)))%>%  
+  ggplot(aes(x = rating, fill = factor(rating))) +
+  geom_bar(color = "grey20") + scale_fill_brewer(palette = "YlGnBu") +
+  guides(fill = FALSE)+ xlab("ratings of 10% of Items with least ratings")
+
+```
+
+#### Number of ratings per user
+As we filtered our ratings all users have at least 3 ratings. However, we can also see that are some users with many ratings. This is interesting, because we can later examine whether frequent raters rate items differently from less frequent raters. We will come back to this later. 
+```{r}
+ratings %>% 
+  group_by(user_id) %>% 
+  dplyr::summarize(number_of_ratings_per_user = n()) %>% 
+  ggplot(aes(number_of_ratings_per_user)) + 
+  geom_bar(fill = "cadetblue3", color = "grey20") #+ coord_cartesian(c(3, 50))
+ratings %>% 
+  group_by(user_id) %>% 
+  dplyr::summarize(number_of_ratings_per_user = n()) %>% 
+  ggplot(aes(number_of_ratings_per_user)) + 
+  geom_bar(fill = "cadetblue3", color = "grey20") + coord_cartesian(c(3, 50))
+```
+#### Number of ratings per item
+As we filtered our ratings all items have at least 3 ratings. However, we can also see that are some items with many ratings. This is interesting, because we can later examine whether frequent raters rate items differently from less frequent raters. We will come back to this later. 
+```{r}
+ratings %>% 
+  group_by(item_id) %>% 
+  dplyr::summarize(number_of_ratings_per_item = n()) %>% 
+  ggplot(aes(number_of_ratings_per_item)) + 
+  geom_bar(fill = "orange", color = "grey20") #+ coord_cartesian(c(3, 50))
+ratings %>% 
+  group_by(item_id) %>% 
+  dplyr::summarize(number_of_ratings_per_item = n()) %>% 
+  ggplot(aes(number_of_ratings_per_item)) + 
+  geom_bar(fill = "orange", color = "grey20") + coord_cartesian(c(3, 150))
+ratings %>% 
+  group_by(item_id) %>% 
+  dplyr::summarize(number_of_ratings_per_item = n()) %>% 
+  ggplot(aes(number_of_ratings_per_item)) + 
+  geom_bar(fill = "orange", color = "grey20") + coord_cartesian(c(0, 30))
+```
+
+Now that you can see the distribution let's remove users who rated fewer than your choice of items. 
+```{r}
+ratings[, NU := .N, .(user_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than N items: ', uniqueN(ratings[NU <= 10, user_id]))
+ratings <- ratings[NU > 10]
+```
+
+And then let's remove items rated fewer than your choice of times. 
+```{r}
+ratings[, NI := .N, .(item_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of items rated fewer than N times: ', uniqueN(ratings[NI <= 15, item_id]))
+ratings <- ratings[NI > 15]
+```
+Now that you can see the distribution let's remove users who rated fewer than your choice of items. 
+```{r}
+ratings[, NU := .N, .(user_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of users who rated fewer than N items: ', uniqueN(ratings[NU <= 10, user_id]))
+ratings <- ratings[NU > 10]
+```
+
+And then let's remove items rated fewer than your choice of times. 
+```{r}
+ratings[, NI := .N, .(item_id)]
+## corresponding dplyr code
+# ratings %>% group_by(user_id) %>% mutate(n = n())
+cat('Number of items rated fewer than N times: ', uniqueN(ratings[NI <= 15, item_id]))
+ratings <- ratings[NI > 15]
+```
+### output
+####redo mean sd and popularity for items. i really should use these
+```{r}
+ItemRedo <- ratings[,
+        .(med.I=median(rating),men.I=mean(rating),sd.I=sd(rating),num.I=.N),
+        by = .(item_id)]
+books<-merge(books,ItemRedo,by="item_id",all=TRUE)
+if(exists("books")) {
+  books<-merge(books,ItemRedo,by="item_id")
+} else {
+    books<-ItemRedo
+    }
+books
+```
+####redo mean sd and popularity for users. 
+```{r}
+UserRedo <- ratings[,
+        .(med.U=median(rating),men.U=mean(rating),sd.U=sd(rating),num.U=.N),
+        by = .(user_id)]
+if(exists("users")) {
+  users<-merge(users,UserRedo,by="user_id")
+} else {
+    users<-UserRedo
+    }
+summary(users)
+```
+ ####remove excess tags !warning goodreads id is used in books
+```{r}
+u.items<-unique(books$goodreads_book_id)
+item_tags<-item_tags[item_tags$goodreads_book_id %in% u.items,]
+u.tags<-unique(item_tags$tag_id)
+tags<-tags[tags$tag_id %in% u.tags,]
+```
+#### fwrite files
+```{r}
+fwrite(ratings,file=paste(input.folder,'/cratings.csv',sep = ""))
+fwrite(books,file=paste(input.folder,'/citems.csv',sep = ""))
+fwrite(users,file=paste(input.folder,'/cusers.csv',sep = ""))
+fwrite(item_tags,file=paste(input.folder,'/citem_tags.csv',sep = ""))  
+fwrite(tags,file=paste(input.folder,'/ctags.csv',sep = ""))
+```
+### pca lda unpersonalized recs
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+```{r}
+library(bigpca)
+?bigpca
+main.filepath<-getwd()
+setwd("C:/")
+```
+
