@@ -32,7 +32,7 @@ stopifnot( all(sA == tA + t(tA)) ,
 ```{r}
 work <- sparseMatrix(ratings$item_id, ratings$user_id, x = ratings$rating)
 str(work)
-work[1:30,1:30]
+work[1:20,1:20]
 as.numeric(work[1,1])
 ```
 ```{r}
@@ -47,8 +47,56 @@ notfail<-batchpca(x=work, q=10, center=F, type = "data", byrow = FALSE)
 ```
 
 ```{r}
+library("onlinePCA")
+n<-unique(ratings$user_id)
+q<-100
+n0<-100
+pca <- prcomp(work[1:n0,],center=FALSE) # initialization
+pca <- list(values = pca$sdev[1:q]^2, vectors = pca$rotation[,1:q])
+for (i in (n0+1):n)
+  pca <- incRpca(pca$values, pca$vectors, work[i,], i-1, q = q)
+
 
 ```
+```{r}
+## Simulate Brownian Motion
+n <- 100 # number of sample paths
+d <- 50 # number of observation points
+x <- matrix(rnorm(n*d,sd=1/sqrt(d)),n,d)
+x <- t(apply(x,1,cumsum)) # dim(x) = c(100,50)
+
+q <- 10 # number of PC to compute
+B <- 30 # block size
+
+## BSOI PCA 
+U <- bsoipca(work, q, B=B, byrow=F) # PCs
+lambda <- apply(work %*% U, 2, var) # eigenvalues 
+
+```
+```{r}
+## Initialization
+n <- 1e3  # sample size
+n0 <- 5e2 # initial sample size
+d <- 10   # number of variables
+q <- 100 # number of PC to compute
+x <- matrix(runif(n*d), n, d)
+x <- x %*% diag(sqrt(12*(1:d)))
+# The eigenvalues of x are close to 1, 2, ..., d
+# and the corresponding eigenvectors are close to 
+# the canonical basis of R^d
+
+## SGA PCA
+xbar <- colMeans(work[1:n0,])
+pca <- batchpca(work[1:n0,], q, center=xbar, byrow=TRUE)
+for (i in (n0+1):n) {
+  xbar <- updateMean(xbar, work[i,], i-1)
+  pca <- sgapca(pca$values, pca$vectors, work[i,], 2/i, q, xbar)
+}
+pca
+
+```
+
+
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
 
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
