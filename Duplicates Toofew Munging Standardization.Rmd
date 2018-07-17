@@ -12,7 +12,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 Key bindings for collapse all: alt-o
 big problem is involvement and education; Though maybe will be motivating for education. Get dad. Going through the effort is worth while because of the simple shadow-duplication attack where a shill falsely  becomes the most useful looking user by copying target's ratings. Duplication is really only an attack on user-user collaborative filtering. However every other system I-I, content based(whats the best drama) and even dimensionality reduction (unless its somehow incomprehensible) can be attacked. Eh this needs lots of work.
-
+ 4 problems: friends, newspeople&revs and investment wave. and addiction. news and revs needs work but friends and 
 
 poeple should be tagzed and outed 
 unpersonalized recommendations go here imho
@@ -97,7 +97,7 @@ for(i in 1:length(objects.to.error)){
 ItemRedo <- ratings[,
         .(med.I=median(rating),men.I=mean(rating),sd.I=sd(rating),num.I=.N),
         by = .(item_id)]
-books<-merge(books,ItemRedo,by="item_id",all=TRUE)
+#books<-merge(books,ItemRedo,by="item_id",all=TRUE)
 ```
 site's means and counts differ from dataset's. Any advanced testing will needto use the recomputed values.
 #### Clean the dataset
@@ -278,13 +278,12 @@ ratings <- ratings[NI > 15]
 ItemRedo <- ratings[,
         .(med.I=median(rating),men.I=mean(rating),sd.I=sd(rating),num.I=.N),
         by = .(item_id)]
-books<-merge(books,ItemRedo,by="item_id",all=TRUE)
 if(exists("books")) {
   books<-merge(books,ItemRedo,by="item_id")
 } else {
     books<-ItemRedo
     }
-books
+summary(books$num.I)
 ```
 ####redo mean sd and popularity for users. 
 ```{r}
@@ -298,20 +297,25 @@ if(exists("users")) {
     }
 summary(users)
 ```
- ####remove excess tags !warning goodreads id is used in books
+ ####remove excess tags !warning goodreads id is used in book's tags so must consolidate books to one uniqe use only work id? no all are 10k
 ```{r}
 u.items<-unique(books$goodreads_book_id)
+#u.tt<-unique(item_tags$goodreads_book_id) #check if it works?
+#setdiff(u.tt,u.items)
+#length(u.items)
 item_tags<-item_tags[item_tags$goodreads_book_id %in% u.items,]
 u.tags<-unique(item_tags$tag_id)
 tags<-tags[tags$tag_id %in% u.tags,]
 ```
 #### fwrite files
 ```{r}
-fwrite(ratings,file=paste(input.folder,'/cratings.csv',sep = ""))
+if(F){
+fwrite(ratings[,1:3],file=paste(input.folder,'/cratings.csv',sep = ""))
 fwrite(books,file=paste(input.folder,'/citems.csv',sep = ""))
 fwrite(users,file=paste(input.folder,'/cusers.csv',sep = ""))
 fwrite(item_tags,file=paste(input.folder,'/citem_tags.csv',sep = ""))  
 fwrite(tags,file=paste(input.folder,'/ctags.csv',sep = ""))
+}
 ```
 ### pca lda unpersonalized recs
 ```{r global_options, include=FALSE}
@@ -319,8 +323,77 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```
 ```{r}
 library(bigpca)
+#library(bioconductor)
 ?bigpca
 main.filepath<-getwd()
-setwd("C:/")
+setwd(main.filepath)
+
+```
+```{r}
+# create a test big.matrix object (file-backed)
+ orig.dir <- getwd(); setwd(tempdir()); # move to temporary dir
+ bM <- filebacked.big.matrix(20, 50,
+        dimnames = list(paste("r",1:20,sep=""), paste("c",1:50,sep="")),
+        backingfile = "test.bck",  backingpath = getwd(), descriptorfile = "test.dsc")
+ bM[1:20,] <- replicate(50,rnorm(20))
+ prv.big.matrix(bM)
+ # now transpose
+ tbM <- big.t(bM,dir=getwd(),verbose=T)
+ prv.big.matrix(tbM,row=10,col=4)
+ colSDs <- bmcapply(tbM,2,sd,n.cores=10)
+ rowSDs <- bmcapply(bM,1,sd,n.cores=10) # use up to 10 cores if available
+ ##  generate some data with reasonable intercorrelations ##
+ #mat <- sim.cor(500,200,genr=function(n){ (runif(n)/2+.5) })
+ bmat <- as.big.matrix(mat)
+ prv.big.matrix(bmat,row=10,col=4)
+ # calculate PCA 
+ result <- big.PCA(bmat)
+ corrected <- PC.correct(result,bmat)
+ corrected2 <- PC.correct(result,bmat,n.cores=5)
+ all.equal(corrected,corrected2)
+ rm(tbM); rm(bM);rm(result); 
+ rm(corrected);rm(corrected2); rm(bmat)
+ clear_active_bms() # delete big.matrix objects in memory
+ unlink(c("test.bck","test.dsc"))
+ setwd(orig.dir)
+
+```
+```{r}
+library(bigpca)
+library(data.table)
+input.folder<-"badbooks"
+output.name<-paste(input.folder,"4",sep = "") ###only after selection
+ratings <- fread(paste(input.folder,'/cratings.csv',sep = ""))
+
+# create a test big.matrix object (file-backed)
+ orig.dir <- getwd(); setwd(tempdir()); # move to temporary dir
+u.ud<-unique(ratings$user_id)
+u.id<-unique(ratings$item_id)
+lu.id<-length(u.id)
+lu.ud<-length(u.ud)
+ bM <- filebacked.big.matrix(9998,7999,
+        backingfile = "bickzz.bck")
+ bM[1:20,] <- replicate(50,rnorm(20))
+ prv.big.matrix(bM)
+ # now transposebackingpath = getwd(),
+ tbM <- big.t(bM,dir=getwd(),verbose=T)
+ prv.big.matrix(tbM,row=10,col=4)
+ colSDs <- bmcapply(tbM,2,sd,n.cores=10)
+ rowSDs <- bmcapply(bM,1,sd,n.cores=10) # use up to 10 cores if available
+ ##  generate some data with reasonable intercorrelations ##
+ #mat <- sim.cor(500,200,genr=function(n){ (runif(n)/2+.5) })
+ bmat <- as.big.matrix(mat)
+ prv.big.matrix(bmat,row=10,col=4)
+ # calculate PCA 
+ result <- big.PCA(bmat)
+ corrected <- PC.correct(result,bmat)
+ corrected2 <- PC.correct(result,bmat,n.cores=5)
+ all.equal(corrected,corrected2)
+ rm(tbM); rm(bM);rm(result); 
+ rm(corrected);rm(corrected2); rm(bmat)
+ clear_active_bms() # delete big.matrix objects in memory
+ unlink(c("test.bck","test.dsc"))
+ setwd(orig.dir)
+
 ```
 

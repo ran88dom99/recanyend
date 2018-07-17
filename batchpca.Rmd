@@ -1,0 +1,59 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(data.table)
+library(Matrix)
+
+input.folder<-"badbooks"
+output.name<-paste(input.folder,"4",sep = "") ###only after selection
+ratings <- fread(paste(input.folder,'/cratings.csv',sep = ""))
+
+ratings<-ratings[ratings$user_id!=4,]
+```
+```{r}
+i <- c(1,3:8); j <- c(2,9,6:10); x <- 7 * (1:7)
+(A <- sparseMatrix(i, j, x = x))                    ##  8 x 10 "dgCMatrix"
+summary(A)
+str(A) # note that *internally* 0-based row indices are used
+
+(sA <- sparseMatrix(i, j, x = x, symmetric = TRUE)) ## 10 x 10 "dsCMatrix"
+(tA <- sparseMatrix(i, j, x = x, triangular= TRUE)) ## 10 x 10 "dtCMatrix"
+stopifnot( all(sA == tA + t(tA)) ,
+           identical(sA, as(tA + t(tA), "symmetricMatrix")))
+
+```
+```{r}
+work <- sparseMatrix(ratings$item_id, ratings$user_id, x = ratings$rating)
+str(work)
+work[1:30,1:30]
+as.numeric(work[1,1])
+```
+```{r}
+library("irlba")
+notfail <- prcomp_irlba(work, n = 10, retx = F, center = F, scale. = FALSE )
+
+```
+```{r}
+library("onlinePCA")
+notfail<-batchpca(x=work, q=10, center=F, type = "data", byrow = FALSE)
+
+```
+
+```{r}
+
+```
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+
+```

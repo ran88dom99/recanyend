@@ -1,0 +1,56 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+#this is bigpca package specific
+```{r}
+library(bigpca)
+library(data.table)
+library(dplyr)
+
+input.folder<-"badbooks"
+output.name<-paste(input.folder,"4",sep = "") ###only after selection
+ratings <- fread(paste(input.folder,'/cratings.csv',sep = ""))
+
+# create a test big.matrix object (file-backed)
+ #orig.dir <- getwd(); setwd(tempdir()); # move to temporary dir
+u.ud<-unique(ratings$user_id)
+u.id<-unique(ratings$item_id)
+lu.id<-length(u.id)
+lu.ud<-length(u.ud)
+ bM <- filebacked.big.matrix(9998,7999,
+        backingfile = "bickzz.bck")
+ #ratingmat <- spread(select(ratings, item_id, user_id, rating), item_id, rating) %>% select(-user_id)
+ for(i in 1:9998){ #i=529
+   rowed<-ratings[item_id==i]
+   for(t in 1:7999){ #t=618
+     colled<-rowed[user_id==t]
+     if(length(colled$user_id)>0){
+       bM[i,t] <- mean(colled$rating)
+       if(length(colled$user_id)>1) print("duplicates")
+     }
+   }
+ }
+
+ prv.big.matrix(bM)
+ # now transposebackingpath = getwd(),
+ tbM <- big.t(bM,dir=getwd(),verbose=T)
+ prv.big.matrix(tbM,row=10,col=4)
+ colSDs <- bmcapply(tbM,2,sd,n.cores=10)
+ rowSDs <- bmcapply(bM,1,sd,n.cores=10) # use up to 10 cores if available
+ ##  generate some data with reasonable intercorrelations ##
+ #mat <- sim.cor(500,200,genr=function(n){ (runif(n)/2+.5) })
+ bmat <- as.big.matrix(mat)
+ prv.big.matrix(bmat,row=10,col=4)
+ # calculate PCA 
+ result <- big.PCA(bM)
+ corrected <- PC.correct(result,bmat)
+ corrected2 <- PC.correct(result,bmat,n.cores=5)
+ all.equal(corrected,corrected2)
+ rm(tbM); rm(bM);rm(result); 
+ rm(corrected);rm(corrected2); rm(bmat)
+ clear_active_bms() # delete big.matrix objects in memory
+ unlink(c("test.bck","test.dsc"))
+ setwd(orig.dir)
+
+```

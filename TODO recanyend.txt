@@ -1,0 +1,419 @@
+MLR to get training mean and high.fold printing
+	move randomseed nearer HF FN
+	.Random.seed[1:2] sometimes splits everything at both fails
+	remove randomseed setting before computation and print # of randomlist instead
+	Several other computations get repeated for printing
+quantiling now over entire dataset and y removed. 
+	Should I make a fold based quantiling preprocessor?
+	BC looks like quantiling target column causes algorithms to guess missing datum. some are amazing at this.
+why did testing not include testing[,-1]????
+
+cns & range on y 's percent RMSE is actualy interchangble with non ys. YeoJ Exp and Quant are not. Get back to this on de-transform?
+all explan var transforms are based on entire dataset. maybe should make cns on only data algo should know?
+Caret has this right? but what about mlr?
+
+ mvo -- only when out?
+ 	cross validation in this situ
+ 	video
+ 	all simple datasets
+ 	speech
+	basic classification?
+
+	
+	MY RECOMMENDER SYSTEM - RECANYEND (recommender system, any dataset, for enduser, at home)
+	
+best way to see the best of each genrea general unheruiscticed should be able to adjust
+BENEFITS:
+User happiness through better recommendations. Only Movix, Movielens, and maybe (I did not check) pandora and last.fm have remotely similar recommendation quality and those are only for movies and music.
+Works on most recommender problems and includes a bunch of datasets. Just add dataset in correct format and edit the 'conversion' RS notebook. EDA won't be stellar.
+Very Flexible. The third RMSE based rec. method can be used to predict many things including dispersion, hours played, and optimistic scores for a group not just a single users scores.
+Privacy. One of the latest algorithms is "personality" based.
+Security. Algorithms are shill resistant. Website can not lie. Shills can not create profiles to directly attack your own through mimicry.
+Learn Statistics. Exploratory data analysis.
+Self control. Youtube suggests videos I should not watch but can not stop myself from watching.
+Lessen undue influence of publishers and advertising.
+Reduce market entrance and advertising costs for artists.
+Hopefully for the industry less friction means more buying. Short, intense, experiences should be picked first because a good tv series is not as good/hour as a good movie.
+The only at-home recommender systems are Triblr and Coolector and neither match my rec quality.
+
+!!!!
+education. i mean suggest educational things
+only the best is given any rel advertisement, my system includes suggesting bad things that user will like.
+
+HARM:
+Competes with friends, community, essayists and reviewers. Recanyend will include friend & reviewer finder (using databases of magazine scores). Maybe more. 
+Addiction. Yes better recs definitely feed addiction for some people but maybe control over recs will help people control themselves.
+Most sites recommend newest items for hypetrainparty and investor's rate of return. Recanyend will recommend older items. Slower 'turnaround' reduces investment in the industry.
+
+DIFFICULTIES:
+Requires some work on user's part. See manual. Though some of that will be learning statistics and self reflection. More automation may be added later to save time.
+Bad interface and probably many bugs.
+Takes lots of calculation time. Root mean squared error goal recommender will need to run overnight. If you want maximum performance a complete run could take 3 weeks. PC must have 3GB free RAM better 6.  No time to write code to parallelize.
+Licenses. Most code is FOSS for personal use but most databases are for research or commercial. So contribute your calculation results to science (or do science) and use the database's source sites. Maybe future automated.
+Distribution. Setting up scripts to dl and install every part is incredibly hard and server intensive so I just zip a portable version and torrent. This way may be insecure and out of date and against license but I have no time.
+
+TODO (no time by me)
+Better automation
+ upload algorithm success metrics to openml or something
+ dl and up.l user scores to relevant sites
+ complete dl and compile scripts
+ heuristics for algorithm selection
+ a decent UI
+ database with single key for users across datasets for cross media recommendations research obviously
+ possibly community features, review combiner in a future with time
+Debugging. there is sure to be plenty
+many many features
+ possibly community features, review combiner in a future with time
+ classification for favorite finder
+Every issue mentioned in EDA
+ when people are forced to read a book like by a school the mean DROPS so normalization is faulty
+ dimensionality reduction and genera
+ optimism based recommendations
+even more datasets, inc of reviewer scores.
+parallelization
+languages
+
+THANKS
+R statistical language
+Several hundred R packages
+Especially caret, mlr, ggplot, recommenderlab and data.table
+RStudio
+Notepad++
+ApacheOpenOffice
+
+
+ feed the computator
+ 	combine
+ 	ad a few more problems
+ 	redo with variable data amount, centers anc distributions,
+	
+ friedman's 2dplanes is too big. (its a test so leave it)
+ only 300mb? seems not to be a problem on acerebout
+ howabout lubridate
+ run r scripts from inside R
+ get glossary machine (hackerterms.com, stats?)
+ correlation and categorical cousin(mvo really)
+ spliting after transform is not ok?
+ 
+ afterwards process:
+ min of pMAE must be > -1
+	rmse,NA,seed, before last when outputing to file
+
+cd "C:\Users\John\Documents\GitHub\GeneratedRegMLBenchmark"
+set isodate=%date:~10,4%-%date:~4,2%-%date:~7,2%
+ren ModelTesterAllAuto.Rout rout%isodate%.txt
+move rout%isodate%.txt "C:\Users\John\Documents\GitHub\GeneratedRegMLBenchmark\ACEREBOUT"
+cd "C:\Users\John\Documents\GitHub\GeneratedRegMLBenchmark"
+ "C:\Users\gvg\Documents\R\R-3.4.3\bin\x64\R.exe" CMD BATCH --max-mem-size=3000 ModelTesterAllAuto.R
+ 
+~OUTPUT FILE EDITS REMEBER:
+	include mean rmse of test set to see original's benefit
+	TASK
+	more?
+	
+ big.pca. online pca
+ educationality score ? 
+ 
+ 
+ For more see self selection bias: https://arxiv.org/pdf/1602.05352v1.pdf https://en.wikipedia.org/wiki/Missing_data
+ attacks:https://www.aaai.org/Papers/AAAI/2005/AAAI05-053.pdf "Recommender Systems for Self-Actualization"
+recsys bias and unfairness and bubbling:http://coen.boisestate.edu/piret/projects/recsys-bias/, http://ceur-ws.org/Vol-1253/paper1.pdf
+ 
+  shilling promote attacks https://www.youtube.com/watch?v=RZAUBBmhKFU
+
+
+ nuke bury anchor demote attacks
+ 
+~propper folder structure
+~remove duplicates & most useless users?
+EDA
+	including that silly curve
+processing each dataset's content info
+
+condorecet-cluster-dimensionality reduction bests
+ ndcg, no-naysayers, popularity modifier. methods to inout . maybe ndcg is optimized by most 5 ratings. 
+ First most top5s then most top5s of those not mentioned then repeat untill everyone is satisfied.
+ Check condorcet in BGG etc.
+ RBM probability based clustering
+ 
+PCA cent asis  and count
+
+select a target column
+basic correl to basic select duplicates
+finding friends most important
+###MUST I REDO PCA IF ITS JUST A DROPIN THE LAKE?
+EDA resticted:are you and yours odd?
+content based dataset
+	&attached PCA
+	miss and reg
+	Fold
+		correls & reclab 
+		and ML
+	
+FOR EACH asis cent-.1 & min in common & fold
+	correls 
+		every kind including negative
+		ML
+	reclab
+		ML
+	stack correls
+		with MLs
+	
+RMSE.mean.train=signif(RMSE(training[,1],train.based.mean), digits = 4) is useless? or just complete juxtaposition to RMSE.mean
+
+###CORREL DEPENDS ON number of items rated in common reproduce
+###RECLAB ADD 3rd TO ML sheet
+ 
++ please automate dataset generation
++ loess seems terrible; reversing transformation is still a majo problem
+
+
++ simple bestest friend finder
+
++ and why does column median work so poorly  in the other computer?
++ move server output, download more parts for server
++ setup indefinite tester. 
+  
+  
++combine calculators
+++add datasets as "generators" in a third "gens" sheet
+  
++real final project with github 
+++and MAL and movielens and combining with generator
++++and seperate folder generation
+++++and automatic 01 encoder
++better projects!
++MVP
+
++info from carret on MC
++info from all on generated
+  
+- what if mean or median of columns differs for sparsity?  
+- c1=gL1^cL1+gL2^cL2 (latent interactive features)
++? what if one is subset of another
+-- c1= u1  c2=c3+ c1
+- haystack  A*B      and later *C
+- haystack noise thin
++? haystack thin and interaction 
++ toy model generators for R
+  
++ first level: mean ,median, schules, weighed evened mean +++ and other condorcet methods.,  
++++ all platt calibrated/iso reg. MAL RMSE minimized
++ Second level: favorite game finder, jusctice friend finder. all the correlations.
++++ SVD, any other feature finder including RMB distribution seekers
++ mean median condorcet realignment realignment
++ really need that isotonic regression... 
++ SVD on transformations. 
++ RMB
++ XML parser
++ basic file system
+
+
++ minimal reproducible example tester
+
++ graph errors to see what user aught to change,  sqr and mae
++ graph mars-etc to see what columns are important when
+
++ find best
+++ find missed little things
+++ find most misrated by collective
++ find friend / find honest
+++ find similar interests
++ find all that belong to a set... just use white noise?
+
++ truth detection is a matter of non-interaction!
+++ or get a better center,
+++ or use one to balance out the specific flaws of another
++++ re-run each isotonic regression to hopefully adjust for errors of previous.
+++ isotonic regressions only. on the best for polynom transformation algorithms. probably biased?
++ what about missing values?
+++ how do I combine with similar interest?
++++ 0? row column center? slightly less than that? generate random values similar to user?
++++ reiewers do not vote on things they do not like. I think this is called "survival"?
++ game centered? or absolute? or test various options like before?
++ how do I know it works? prediction again?  well yes.
++ there exist works on subject of friends to follow / journals most honest + query recommenderlab
+
++ but first test condorcet, mean median reset etc. 
++ test using MAE RMSE pearson kendall
++ THEN isotonic JUSTICE!
+
+- brilliant.org/datasceptik
++ c_dfRowsToList , bad unload causes memory leak?
++ c() in importance.csv or why append a vector to file seperates each scalar to a new line.
+	+ ie how remove c()
++ too much unload causes crashes,
++ search generateFilterValuesData + benchmark probably on github 
+- add actual correct output directly to var fil corr
+ 
+- add hyperparamless part to cartpart.R
+- does java and this ever help?
+- rerun all significant differences between #9 and 8 to check for reset influence
+- C2^.56 + C3^1.3 + C4^1.055 + C5 ^ 2.2
+- wtf is up with detection and crashing on random?
+
+- Random Hunt + in secong gen when random is not "random"
+- Center n Scale 
+
++ SIMPSON'S PARADOX ++++++ well add it ok?
+
++ but what will be the common preprocess? cns or range?
++ reaserch mlr's preffered algorithms (km mob brnn gamboost glmnet)
+- missing? maybe in mlr: dlkeras, LibSVM, generalized regression neural network and extreme learning machine with Gaussian kernels in Matlab (named grnn and elm-kernel respectively)
+- add manisha thesis to list on data!science!
+
++ test each algorithm through and through
+++ maximal number of dps at which target works
+++ on theoretical setup and actual 
+
++  find oh say 100 best by simply kendall spearman then boosting.
++  can svd be boostd? and kendall spearman?
+
+
+-how to predict with hyperopt?; train with new parameters
+--+batchtools search online ;compare graphs etc.
+--+just for luls a database for R
+--+2d terrain map for strange interactions
+-add kaggle housing
++add kaggle MAL. or lens or w/e
+
+
+
++extract 'earth' nomials
++add recc lab funksvd or netflix svd features?
++add MARS earth features 
++Can MARSEARTH deal with ifs if features to multiply against are added??? YES! its the 2  interactions limitation
+++I do not need to seperate data just use this!.
+
++shouldn't loss cost error function depend on number of pubs reviewing a game?, so sampling based on that?
++and similarity + so an error detection system? or rather certainty prediction
++outside program to restart computer  
+
+???+OR fast randomness test
+---+and internal to keep track of fail algorithms.
+---+but first! automatic yes please dl update
+
++SVD and RMB feature creation as in Netflix Prize
++that one mlr tester had a program on github
++mlr no hyper search if hypersearch fails
+
++read?write up on the type of relations the methods can detect
+-+Polynoms!?! use formula interface and poly()
+-+one model works when a column is over 5 points, another when under. how do I resolve that?! CUBIST
+--expirament:lots of little highest R2=.75, R1=.65 but highest always split though many algorithms .4 both. conditional reaction; sometimes copies one set sometimes another
+--X: if C1 low C2 represents
+-can the median(with only a few columns) and mean subtraction be detected? and plain random?
+--+generation model of 10 pubs 3 elements and 100 games
+
+-probably skip this completely and just check RMSE and ME don't correct before calculating.
++Convert from quantile and range into "original"  
++Convert between 0-40 and real original and maybe 
+-+the rescaling of each publication score, but if it does not help then do not bother with deviation equalization
+--leave the subtraction median with MC part of the calc but MC missing, so hopeufully just using subtraction does not work.
+-+test for prediction based on genera and other things that should not matter; none.both. and only other metrics.; what pub is really pointless
+
+-move MAE before date, add MAE absolute, MAE relative 1-
+-time counting for each calc
+
+-Test all algorithms and maybe find out why some dont work(seems to be a case of too big data; need big pc?)
+-was mlmetrics really a good idea? get back if predictions are very personal
+-i think mean will have to be recalculated to hide target column's influence. 
+-median from scratch ?
+
++MLR, adaptive hyperparam picking?
++perhaps i set the wrong aim? ABD test should aim for average diffferenc? that is check decomposition?
++check if quantile ever works better. actualy check if anything ever works better. only work on it if theres a chance
++split score and # of reviews off stats, to show what is clearly cause,also test decompositionability
+
++test how long accidental success takes.
+
++Test with random seed and many more crossvalidations?? on a much bigger computer.
++multistacking. (its another for loop like data representation)
+++error insted of prediction for each model to stack itself?
+++(picking models)
++confidence of any given prediction
+++models of prediction of error rate
+
++why doesn't bartmachine work?
++the other filter reccomendation systems
++column importance
+
+stacks=c("nostack","prestackA","prestackB","stack1","errorcorrection","errorprediction")
+for (stack in stacks)
+...
+if statement transforms test/training into A train and B train
+...
+IF! save predictions into correct database part....How do I recombine vectors?
+save errors too.
+
+include checks for previous calculation... except don't.
+
++Make an interface
+++first pubs with similar focus
+++here develop choosing number based on MAE. 
+++INTERPRETABLE PREDICTION; then lowest RMSE?  or ME . but using CV or maybe testing split. CV adjusts for those rare mistakes too? Knn i think its called.
+++ULTIMATE BLACKBOX PREDICTION; finaly revert bagged boosted stacked orchestrated to find most important pubs including using L1OUT
++advise badly chosen scores
+++ANOMALY DETECTION; MicroS says One-class svm -> 100 features agressive boundry, PCA based anomaly detection.
+++MUST INCLUDE PROOF, a printout of all scores by user and pubs that may effect him ordered by most effective...
+++++actual maximum rated game
+++resort userinput based on config and previouse use
+
+read config
+read main
+read user input
+read column.names
+reduce data to only important rows
+sort columns by # reviews
+Function "proof"(prints your scores and all closest pubs scores)
+calculate rmse of naivest methods(averages and means and medians)
+calculate genera sufficiencys (and print them?)
+?calculate all the funy score adjustments including outliers.
+Function printout selected columns
+	calculate 5,5,5 extremes
+	calculate sucess rates
+	transpose print to file inc date based name
+--------------------require would be better
+list.of.packages <- c("xx", "yy") # replace xx and yy with package names
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages, dep = TRUE) 
+lapply(new.packages, require, character.only=T)
+-----------------------require(pkg) || install.packages(pkg) 
+usePackage <- function(p) 
+{
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE)
+}
+	
+#sort #split and recombine when stacking
+	
+stats.rows<- as.data.frame(x=read.csv("all statistic columns.csv", sep = ",",fill=TRUE, header = FALSE,quote="",dec="."))
+dummies <- dummyVars(V4 ~ ., data = stats.rows)
+stats.rows<-data.frame(stats.rows[,4],predict(dummies, newdata = stats.rows))
+preProcValues= preProcess(stats.rows,method = "medianImpute")
+stats.rows<- predict(preProcValues, stats.rows)
+
+#?as.data.frame(x=read.csv("all statistic columns.csv", sep = ",",fill=TRUE, header = FALSE,quote="",dec="."))
+column.names<-as.data.frame(x=read.csv("all statistic columns.csv", sep = ",",fill=TRUE, header = FALSE,quote="",dec="."))
+users.config<-as.matrix(read.csv("26340 transform right tail 0 t 40  .csv", sep = ",",fill=TRUE, header = FALSE,quote="",dec="."))
+data.source<-as.matrix(read.csv("26340 transform right tail 0 t 40  .csv", sep = ",",fill=TRUE, header = FALSE,quote="",dec="."))
+user.revscor<-as.matrix(read.csv("26340 transform right tail 0 t 40  .csv", sep = ",",fill=TRUE, header = FALSE,quote="",dec="."))
+
+column.to.predict=1
+df.data=data.frame(user.revscor[,3] ,data.source[,])
+      
+  user.scor.select=complete.cases(df.data[,column.to.predict])
+  df.data=data.frame(df.data[user.scor.select,])
+
+#sort by mpg (ascending) and cyl (descending)
+newdata <- mtcars[order(mpg, -cyl),]
+
+
+
+in the above 99% avNNET-only-0-1 pcaNNet-only-0-1  BstLm cubist earth enet glmboost icr kernelpls lasso pcr pls
+
+random is random, pcr ? detects mean to 40%rmse vs mean. median best 7%. elements most 100%. 
+
+
+install.packages.compile.from.source: Used by install.packages(type = "both") (and indirectly update.packages) on platforms which support binary packages. Possible values are "never", "interactive" (which means ask in interactive use and "never" in batch use) and "always". The default is taken from environment variable R_COMPILE_AND_INSTALL_PACKAGES, with default "interactive" if unset. However, install.packages uses "never" unless a make program is found, consulting the environment variable MAKE.
