@@ -180,108 +180,31 @@ $(document).ready(function () {
 <p>Try executing this chunk by clicking the <em>Run</em> button within the chunk or by placing your cursor inside it and pressing <em>Ctrl+Shift+Enter</em>.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkYXRhLnRhYmxlKVxuYGBgIn0= -->
-<pre class="r"><code>library(data.table)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiZGF0YS50YWJsZSAxLjExLjQgIExhdGVzdCBuZXdzOiBodHRwOi8vci1kYXRhdGFibGUuY29tXG4ifQ== -->
-<pre><code>data.table 1.11.4  Latest news: http://r-datatable.com</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShNYXRyaXgpXG5pbnB1dC5mb2xkZXI8LVwiYmFkYm9va3NcIlxub3V0cHV0Lm5hbWU8LXBhc3RlKGlucHV0LmZvbGRlcixcIjRcIixzZXAgPSBcIlwiKSAjIyNvbmx5IGFmdGVyIHNlbGVjdGlvblxucmF0aW5ncyA8LSBmcmVhZChwYXN0ZShpbnB1dC5mb2xkZXIsJy9jcmF0aW5ncy5jc3YnLHNlcCA9IFwiXCIpKVxuYGBgIn0= -->
-<pre class="r"><code>library(Matrix)
-input.folder&lt;-&quot;badbooks&quot;
-output.name&lt;-paste(input.folder,&quot;4&quot;,sep = &quot;&quot;) ###only after selection
-ratings &lt;- fread(paste(input.folder,'/cratings.csv',sep = &quot;&quot;))</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoifC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tfFxufD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09fFxuIn0= -->
-<pre><code>|--------------------------------------------------|
-|==================================================|</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucmF0aW5nczwtcmF0aW5nc1tyYXRpbmdzJHVzZXJfaWQhPTQsXVxuYGBgIn0= -->
-<pre class="r"><code>ratings&lt;-ratings[ratings$user_id!=4,]</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkYXRhLnRhYmxlKVxubGlicmFyeShNYXRyaXgpXG5pbnB1dC5mb2xkZXIgPC0gXCJiYWRib29rc1wiXG5vdXRwdXQubmFtZSA8LSBwYXN0ZShpbnB1dC5mb2xkZXIsXCI0XCIsc2VwID0gXCJcIikgIyMjb25seSBhZnRlciBzZWxlY3Rpb25cbnJhdGluZ3MgPC0gZnJlYWQocGFzdGUoaW5wdXQuZm9sZGVyLCcvY3JhdGluZ3MuY3N2JyxzZXAgPSBcIlwiKSlcbiN1c2VyYXRpbmdzPC1yYXRpbmdzW3JhdGluZ3MkdXNlcl9pZD09NCxdXG4jcmF0aW5nczwtcmF0aW5nc1tyYXRpbmdzJHVzZXJfaWQhPTQsXVxuI2ZvcihpdHIgaW4gMTptYXgocmF0aW5ncyRpdGVtX2lkKSl7XG4jICBpdGVyYXRpbmc8LXVzZXJhdGluZ3NbdXNlcmF0aW5ncyRpdGVtX2lkPT1pdHIsXVxuI31cbmBgYCJ9 -->
+<pre class="r"><code>library(data.table)
+library(Matrix)
+input.folder &lt;- &quot;badbooks&quot;
+output.name &lt;- paste(input.folder,&quot;4&quot;,sep = &quot;&quot;) ###only after selection
+ratings &lt;- fread(paste(input.folder,'/cratings.csv',sep = &quot;&quot;))
+#useratings&lt;-ratings[ratings$user_id==4,]
+#ratings&lt;-ratings[ratings$user_id!=4,]
+#for(itr in 1:max(ratings$item_id)){
+#  iterating&lt;-useratings[useratings$item_id==itr,]
+#}</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaSA8LSBjKDEsMzo4KTsgaiA8LSBjKDIsOSw2OjEwKTsgeCA8LSA3ICogKDE6NylcbihBIDwtIHNwYXJzZU1hdHJpeChpLCBqLCB4ID0geCkpICAgICAgICAgICAgICAgICAgICAjIyAgOCB4IDEwIFwiZGdDTWF0cml4XCJcbmBgYCJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaSA8LSBjKDEsMzo4KTsgaiA8LSBjKDIsOSw2OjEwKTsgeCA8LSA3ICogKDE6NylcbihBIDwtIHNwYXJzZU1hdHJpeChpLCBqLCB4ID0geCkpICAgICAgICAgICAgICAgICAgICAjIyAgOCB4IDEwIFwiZGdDTWF0cml4XCJcbnN1bW1hcnkoQSlcbnN0cihBKSAjIG5vdGUgdGhhdCAqaW50ZXJuYWxseSogMC1iYXNlZCByb3cgaW5kaWNlcyBhcmUgdXNlZFxuXG4oc0EgPC0gc3BhcnNlTWF0cml4KGksIGosIHggPSB4LCBzeW1tZXRyaWMgPSBUUlVFKSkgIyMgMTAgeCAxMCBcImRzQ01hdHJpeFwiXG4odEEgPC0gc3BhcnNlTWF0cml4KGksIGosIHggPSB4LCB0cmlhbmd1bGFyPSBUUlVFKSkgIyMgMTAgeCAxMCBcImR0Q01hdHJpeFwiXG5zdG9waWZub3QoIGFsbChzQSA9PSB0QSArIHQodEEpKSAsXG4gICAgICAgICAgIGlkZW50aWNhbChzQSwgYXModEEgKyB0KHRBKSwgXCJzeW1tZXRyaWNNYXRyaXhcIikpKVxuXG5gYGAifQ== -->
 <pre class="r"><code>i &lt;- c(1,3:8); j &lt;- c(2,9,6:10); x &lt;- 7 * (1:7)
-(A &lt;- sparseMatrix(i, j, x = x))                    ##  8 x 10 &quot;dgCMatrix&quot;</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiOCB4IDEwIHNwYXJzZSBNYXRyaXggb2YgY2xhc3MgXCJkZ0NNYXRyaXhcIlxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcblsxLF0gLiA3IC4gLiAuICAuICAuICAuICAuICAuXG5bMixdIC4gLiAuIC4gLiAgLiAgLiAgLiAgLiAgLlxuWzMsXSAuIC4gLiAuIC4gIC4gIC4gIC4gMTQgIC5cbls0LF0gLiAuIC4gLiAuIDIxICAuICAuICAuICAuXG5bNSxdIC4gLiAuIC4gLiAgLiAyOCAgLiAgLiAgLlxuWzYsXSAuIC4gLiAuIC4gIC4gIC4gMzUgIC4gIC5cbls3LF0gLiAuIC4gLiAuICAuICAuICAuIDQyICAuXG5bOCxdIC4gLiAuIC4gLiAgLiAgLiAgLiAgLiA0OVxuIn0= -->
-<pre><code>8 x 10 sparse Matrix of class &quot;dgCMatrix&quot;
-                             
-[1,] . 7 . . .  .  .  .  .  .
-[2,] . . . . .  .  .  .  .  .
-[3,] . . . . .  .  .  . 14  .
-[4,] . . . . . 21  .  .  .  .
-[5,] . . . . .  . 28  .  .  .
-[6,] . . . . .  .  . 35  .  .
-[7,] . . . . .  .  .  . 42  .
-[8,] . . . . .  .  .  .  . 49</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3VtbWFyeShBKVxuYGBgIn0= -->
-<pre class="r"><code>summary(A)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiOCB4IDEwIHNwYXJzZSBNYXRyaXggb2YgY2xhc3MgXCJkZ0NNYXRyaXhcIiwgd2l0aCA3IGVudHJpZXMgXG4gIGkgIGogIHhcbjEgMSAgMiAgN1xuMiA0ICA2IDIxXG4zIDUgIDcgMjhcbjQgNiAgOCAzNVxuNSAzICA5IDE0XG42IDcgIDkgNDJcbjcgOCAxMCA0OVxuIn0= -->
-<pre><code>8 x 10 sparse Matrix of class &quot;dgCMatrix&quot;, with 7 entries 
-  i  j  x
-1 1  2  7
-2 4  6 21
-3 5  7 28
-4 6  8 35
-5 3  9 14
-6 7  9 42
-7 8 10 49</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3RyKEEpICMgbm90ZSB0aGF0ICppbnRlcm5hbGx5KiAwLWJhc2VkIHJvdyBpbmRpY2VzIGFyZSB1c2VkXG5gYGAifQ== -->
-<pre class="r"><code>str(A) # note that *internally* 0-based row indices are used</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRm9ybWFsIGNsYXNzICdkZ0NNYXRyaXgnIFtwYWNrYWdlIFwiTWF0cml4XCJdIHdpdGggNiBzbG90c1xuICAuLkAgaSAgICAgICA6IGludCBbMTo3XSAwIDMgNCA1IDIgNiA3XG4gIC4uQCBwICAgICAgIDogaW50IFsxOjExXSAwIDAgMSAxIDEgMSAyIDMgNCA2IC4uLlxuICAuLkAgRGltICAgICA6IGludCBbMToyXSA4IDEwXG4gIC4uQCBEaW1uYW1lczpMaXN0IG9mIDJcbiAgLi4gLi4kIDogTlVMTFxuICAuLiAuLiQgOiBOVUxMXG4gIC4uQCB4ICAgICAgIDogbnVtIFsxOjddIDcgMjEgMjggMzUgMTQgNDIgNDlcbiAgLi5AIGZhY3RvcnMgOiBsaXN0KClcbiJ9 -->
-<pre><code>Formal class 'dgCMatrix' [package &quot;Matrix&quot;] with 6 slots
-  ..@ i       : int [1:7] 0 3 4 5 2 6 7
-  ..@ p       : int [1:11] 0 0 1 1 1 1 2 3 4 6 ...
-  ..@ Dim     : int [1:2] 8 10
-  ..@ Dimnames:List of 2
-  .. ..$ : NULL
-  .. ..$ : NULL
-  ..@ x       : num [1:7] 7 21 28 35 14 42 49
-  ..@ factors : list()</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuKHNBIDwtIHNwYXJzZU1hdHJpeChpLCBqLCB4ID0geCwgc3ltbWV0cmljID0gVFJVRSkpICMjIDEwIHggMTAgXCJkc0NNYXRyaXhcIlxuYGBgIn0= -->
-<pre class="r"><code>(sA &lt;- sparseMatrix(i, j, x = x, symmetric = TRUE)) ## 10 x 10 &quot;dsCMatrix&quot;</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiMTAgeCAxMCBzcGFyc2UgTWF0cml4IG9mIGNsYXNzIFwiZHNDTWF0cml4XCJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuIFsxLF0gLiA3ICAuICAuICAuICAuICAuICAuICAuICAuXG4gWzIsXSA3IC4gIC4gIC4gIC4gIC4gIC4gIC4gIC4gIC5cbiBbMyxdIC4gLiAgLiAgLiAgLiAgLiAgLiAgLiAxNCAgLlxuIFs0LF0gLiAuICAuICAuICAuIDIxICAuICAuICAuICAuXG4gWzUsXSAuIC4gIC4gIC4gIC4gIC4gMjggIC4gIC4gIC5cbiBbNixdIC4gLiAgLiAyMSAgLiAgLiAgLiAzNSAgLiAgLlxuIFs3LF0gLiAuICAuICAuIDI4ICAuICAuICAuIDQyICAuXG4gWzgsXSAuIC4gIC4gIC4gIC4gMzUgIC4gIC4gIC4gNDlcbiBbOSxdIC4gLiAxNCAgLiAgLiAgLiA0MiAgLiAgLiAgLlxuWzEwLF0gLiAuICAuICAuICAuICAuICAuIDQ5ICAuICAuXG4ifQ== -->
-<pre><code>10 x 10 sparse Matrix of class &quot;dsCMatrix&quot;
-                                 
- [1,] . 7  .  .  .  .  .  .  .  .
- [2,] 7 .  .  .  .  .  .  .  .  .
- [3,] . .  .  .  .  .  .  . 14  .
- [4,] . .  .  .  . 21  .  .  .  .
- [5,] . .  .  .  .  . 28  .  .  .
- [6,] . .  . 21  .  .  . 35  .  .
- [7,] . .  .  . 28  .  .  . 42  .
- [8,] . .  .  .  . 35  .  .  . 49
- [9,] . . 14  .  .  . 42  .  .  .
-[10,] . .  .  .  .  .  . 49  .  .</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuKHRBIDwtIHNwYXJzZU1hdHJpeChpLCBqLCB4ID0geCwgdHJpYW5ndWxhcj0gVFJVRSkpICMjIDEwIHggMTAgXCJkdENNYXRyaXhcIlxuYGBgIn0= -->
-<pre class="r"><code>(tA &lt;- sparseMatrix(i, j, x = x, triangular= TRUE)) ## 10 x 10 &quot;dtCMatrix&quot;</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiMTAgeCAxMCBzcGFyc2UgTWF0cml4IG9mIGNsYXNzIFwiZHRDTWF0cml4XCJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuIFsxLF0gLiA3IC4gLiAuICAuICAuICAuICAuICAuXG4gWzIsXSAuIC4gLiAuIC4gIC4gIC4gIC4gIC4gIC5cbiBbMyxdIC4gLiAuIC4gLiAgLiAgLiAgLiAxNCAgLlxuIFs0LF0gLiAuIC4gLiAuIDIxICAuICAuICAuICAuXG4gWzUsXSAuIC4gLiAuIC4gIC4gMjggIC4gIC4gIC5cbiBbNixdIC4gLiAuIC4gLiAgLiAgLiAzNSAgLiAgLlxuIFs3LF0gLiAuIC4gLiAuICAuICAuICAuIDQyICAuXG4gWzgsXSAuIC4gLiAuIC4gIC4gIC4gIC4gIC4gNDlcbiBbOSxdIC4gLiAuIC4gLiAgLiAgLiAgLiAgLiAgLlxuWzEwLF0gLiAuIC4gLiAuICAuICAuICAuICAuICAuXG4ifQ== -->
-<pre><code>10 x 10 sparse Matrix of class &quot;dtCMatrix&quot;
-                              
- [1,] . 7 . . .  .  .  .  .  .
- [2,] . . . . .  .  .  .  .  .
- [3,] . . . . .  .  .  . 14  .
- [4,] . . . . . 21  .  .  .  .
- [5,] . . . . .  . 28  .  .  .
- [6,] . . . . .  .  . 35  .  .
- [7,] . . . . .  .  .  . 42  .
- [8,] . . . . .  .  .  .  . 49
- [9,] . . . . .  .  .  .  .  .
-[10,] . . . . .  .  .  .  .  .</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3RvcGlmbm90KCBhbGwoc0EgPT0gdEEgKyB0KHRBKSkgLFxuICAgICAgICAgICBpZGVudGljYWwoc0EsIGFzKHRBICsgdCh0QSksIFwic3ltbWV0cmljTWF0cml4XCIpKSlcbmBgYCJ9 -->
-<pre class="r"><code>stopifnot( all(sA == tA + t(tA)) ,
-           identical(sA, as(tA + t(tA), &quot;symmetricMatrix&quot;)))</code></pre>
+(A &lt;- sparseMatrix(i, j, x = x))                    ##  8 x 10 &quot;dgCMatrix&quot;
+summary(A)
+str(A) # note that *internally* 0-based row indices are used
+
+(sA &lt;- sparseMatrix(i, j, x = x, symmetric = TRUE)) ## 10 x 10 &quot;dsCMatrix&quot;
+(tA &lt;- sparseMatrix(i, j, x = x, triangular= TRUE)) ## 10 x 10 &quot;dtCMatrix&quot;
+stopifnot( all(sA == tA + t(tA)) ,
+           identical(sA, as(tA + t(tA), &quot;symmetricMatrix&quot;)))
+</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-chunk-begin -->
@@ -289,100 +212,122 @@ ratings &lt;- fread(paste(input.folder,'/cratings.csv',sep = &quot;&quot;))</cod
 <pre class="r"><code>work &lt;- sparseMatrix(ratings$item_id, ratings$user_id, x = ratings$rating)
 str(work)</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRm9ybWFsIGNsYXNzICdkZ0NNYXRyaXgnIFtwYWNrYWdlIFwiTWF0cml4XCJdIHdpdGggNiBzbG90c1xuICAuLkAgaSAgICAgICA6IGludCBbMTo1OTc2MzI2XSAzIDkgMTAgMTIgMTUgMjEgMzAgMzEgMzIgMzQgLi4uXG4gIC4uQCBwICAgICAgIDogaW50IFsxOjUzNDI1XSAwIDExNyAxODIgMjczIDI3MyAzNzMgNDYzIDYxOCA3MTYgODQ4IC4uLlxuICAuLkAgRGltICAgICA6IGludCBbMToyXSAxMDAwMCA1MzQyNFxuICAuLkAgRGltbmFtZXM6TGlzdCBvZiAyXG4gIC4uIC4uJCA6IE5VTExcbiAgLi4gLi4kIDogTlVMTFxuICAuLkAgeCAgICAgICA6IG51bSBbMTo1OTc2MzI2XSA1IDQgNSA0IDMgMyA0IDQgNCA1IC4uLlxuICAuLkAgZmFjdG9ycyA6IGxpc3QoKVxuIn0= -->
+<!-- rnb-output-begin eyJkYXRhIjoiRm9ybWFsIGNsYXNzICdkZ0NNYXRyaXgnIFtwYWNrYWdlIFwiTWF0cml4XCJdIHdpdGggNiBzbG90c1xuICAuLkAgaSAgICAgICA6IGludCBbMTo1OTc2NDYwXSAzIDkgMTAgMTIgMTUgMjEgMzAgMzEgMzIgMzQgLi4uXG4gIC4uQCBwICAgICAgIDogaW50IFsxOjUzNDI1XSAwIDExNyAxODIgMjczIDQwNyA1MDcgNTk3IDc1MiA4NTAgOTgyIC4uLlxuICAuLkAgRGltICAgICA6IGludCBbMToyXSAxMDAwMCA1MzQyNFxuICAuLkAgRGltbmFtZXM6TGlzdCBvZiAyXG4gIC4uIC4uJCA6IE5VTExcbiAgLi4gLi4kIDogTlVMTFxuICAuLkAgeCAgICAgICA6IG51bSBbMTo1OTc2NDYwXSA1IDQgNSA0IDMgMyA0IDQgNCA1IC4uLlxuICAuLkAgZmFjdG9ycyA6IGxpc3QoKVxuIn0= -->
 <pre><code>Formal class 'dgCMatrix' [package &quot;Matrix&quot;] with 6 slots
-  ..@ i       : int [1:5976326] 3 9 10 12 15 21 30 31 32 34 ...
-  ..@ p       : int [1:53425] 0 117 182 273 273 373 463 618 716 848 ...
+  ..@ i       : int [1:5976460] 3 9 10 12 15 21 30 31 32 34 ...
+  ..@ p       : int [1:53425] 0 117 182 273 407 507 597 752 850 982 ...
   ..@ Dim     : int [1:2] 10000 53424
   ..@ Dimnames:List of 2
   .. ..$ : NULL
   .. ..$ : NULL
-  ..@ x       : num [1:5976326] 5 4 5 4 3 3 4 4 4 5 ...
+  ..@ x       : num [1:5976460] 5 4 5 4 3 3 4 4 4 5 ...
   ..@ factors : list()</code></pre>
 <!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxud29ya1sxOjMwLDE6MzBdXG5gYGAifQ== -->
-<pre class="r"><code>work[1:30,1:30]</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxud29ya1sxOjIwLDE6MjBdXG5gYGAifQ== -->
+<pre class="r"><code>work[1:20,1:20]</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiMzAgeCAzMCBzcGFyc2UgTWF0cml4IG9mIGNsYXNzIFwiZGdDTWF0cml4XCJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gWzEsXSAuIC4gLiAuIC4gLiAuIC4gNCAuIC4gLiAuIDQgLiAuIC4gLiAuIC4gLiAzIC4gLiAuIC4gNCA1IC4gNFxuIFsyLF0gLiA1IC4gLiAuIC4gLiAuIDQgLiAuIDUgLiAuIDQgLiAuIC4gMyAuIDQgLiAuIDMgLiAuIC4gLiA1IDRcbiBbMyxdIC4gLiAuIC4gLiAuIC4gLiA0IC4gLiAyIC4gLiA1IC4gLiAyIC4gLiAuIDMgLiAuIC4gLiAuIC4gLiAuXG4gWzQsXSA1IC4gMyAuIC4gLiAuIDMgLiA1IDMgNCAuIC4gMyAuIC4gNCA0IC4gLiAuIDQgNCA0IC4gLiA1IDQgLlxuIFs1LF0gLiA1IC4gLiAuIC4gMyAzIDUgNSAuIDIgLiAuIDQgLiAuIDQgMyAuIC4gLiAuIDQgLiAuIC4gMyAuIDNcbiBbNixdIC4gLiAuIC4gNCAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiA0IC4gLiAuXG4gWzcsXSAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gNSAzIC4gLiAuIC4gLiAuIC4gLiAuIC4gLlxuIFs4LF0gLiA0IC4gLiAuIC4gMiAuIC4gLiA1IDQgLiAuIDUgNCAuIDQgMyAuIDMgLiAuIDQgNSA0IC4gNCAuIDRcbiBbOSxdIC4gLiAuIC4gLiAuIC4gLiAxIC4gLiA0IC4gLiAzIC4gLiAyIC4gLiAuIDIgLiA0IC4gLiAuIDMgLiAuXG5bMTAsXSA0IDUgLiAuIC4gLiAuIDEgNSA1IC4gLiAuIC4gNSAzIC4gLiA0IC4gNCAuIC4gNCAuIC4gLiAuIC4gLlxuWzExLF0gNSAuIC4gLiAuIC4gLiAuIDEgMyA0IDUgNSAzIDUgLiAuIDMgLiAuIC4gLiAuIDQgLiAuIC4gNSAuIDVcblsxMixdIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gMSAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuXG5bMTMsXSA0IC4gMiAuIC4gLiA1IDQgNSAuIC4gLiAuIDMgNCAuIC4gNCAuIC4gLiAuIC4gLiA0IDQgLiAuIC4gNVxuWzE0LF0gLiAuIC4gLiAuIC4gLiA1IDQgLiAuIDUgLiAzIDQgNSAuIDQgMyAuIDMgLiAzIC4gNCA0IC4gLiAuIDVcblsxNSxdIC4gNSAzIC4gLiAuIC4gLiAuIDUgNSAuIC4gLiAuIC4gLiAuIDMgLiAuIC4gLiA0IC4gLiAuIC4gLiAuXG5bMTYsXSAzIC4gLiAuIC4gLiAuIC4gMiA0IDMgNCA1IDEgLiAuIC4gLiAuIC4gLiAuIC4gMyAuIC4gLiAuIDQgLlxuWzE3LF0gLiAuIC4gLiAuIC4gLiAuIDMgLiAuIC4gLiAzIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIDQgNCAuIDRcblsxOCxdIC4gNSAuIC4gLiAuIC4gLiA1IC4gLiAuIC4gMiA0IC4gLiAuIDMgLiA0IC4gLiAzIC4gLiAuIC4gNCA0XG5bMTksXSAuIC4gLiAuIC4gLiAuIC4gLiA1IC4gNSAuIC4gLiAuIC4gLiA0IC4gLiAuIC4gLiAuIC4gLiAuIDUgNFxuWzIwLF0gLiAuIC4gLiAuIC4gLiAuIDQgLiAuIC4gLiAyIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gMyAuIDRcblsyMSxdIC4gNSAuIC4gLiAuIC4gLiAzIC4gLiAuIC4gNCAzIC4gLiAuIC4gLiA0IC4gLiAzIC4gLiAuIC4gNSA0XG5bMjIsXSAzIC4gLiAuIC4gLiAuIC4gMyAuIC4gMyAuIC4gLiA0IC4gLiAuIC4gLiAuIC4gLiAuIC4gLiA1IC4gLlxuWzIzLF0gLiA1IC4gLiAuIC4gLiAuIDMgLiAuIC4gLiAuIC4gLiAuIC4gMyAuIDQgLiAuIDMgLiAuIC4gLiA0IDRcblsyNCxdIC4gNSAuIC4gLiAuIC4gLiAzIC4gLiAuIC4gMiA0IC4gLiAuIC4gLiA0IC4gLiA0IC4gLiAuIC4gNCA0XG5bMjUsXSAuIDUgLiAuIC4gLiA0IC4gNSA0IC4gLiAuIDMgNSAuIC4gLiAuIC4gLiAuIC4gNCAuIC4gLiAuIDUgNVxuWzI2LF0gLiA0IC4gLiAuIC4gLiAuIDIgMyAzIC4gLiAuIDMgLiAuIDIgMyAuIDMgLiAuIDMgLiAuIC4gMiAuIDRcblsyNyxdIC4gNSAuIC4gLiAuIC4gLiA0IC4gLiAuXG4ifQ== -->
-<pre><code>30 x 30 sparse Matrix of class &quot;dgCMatrix&quot;
-                                                                 
- [1,] . . . . . . . . 4 . . . . 4 . . . . . . . 3 . . . . 4 5 . 4
- [2,] . 5 . . . . . . 4 . . 5 . . 4 . . . 3 . 4 . . 3 . . . . 5 4
- [3,] . . . . . . . . 4 . . 2 . . 5 . . 2 . . . 3 . . . . . . . .
- [4,] 5 . 3 . . . . 3 . 5 3 4 . . 3 . . 4 4 . . . 4 4 4 . . 5 4 .
- [5,] . 5 . . . . 3 3 5 5 . 2 . . 4 . . 4 3 . . . . 4 . . . 3 . 3
- [6,] . . . . 4 . . . . . . . . . . . . . . . . . . . . . 4 . . .
- [7,] . . . . . . . . . . . . . . . . . 5 3 . . . . . . . . . . .
- [8,] . 4 . . . . 2 . . . 5 4 . . 5 4 . 4 3 . 3 . . 4 5 4 . 4 . 4
- [9,] . . . . . . . . 1 . . 4 . . 3 . . 2 . . . 2 . 4 . . . 3 . .
-[10,] 4 5 . . . . . 1 5 5 . . . . 5 3 . . 4 . 4 . . 4 . . . . . .
-[11,] 5 . . . . . . . 1 3 4 5 5 3 5 . . 3 . . . . . 4 . . . 5 . 5
-[12,] . . . . . . . . . . . . . 1 . . . . . . . . . . . . . . . .
-[13,] 4 . 2 . . . 5 4 5 . . . . 3 4 . . 4 . . . . . . 4 4 . . . 5
-[14,] . . . . . . . 5 4 . . 5 . 3 4 5 . 4 3 . 3 . 3 . 4 4 . . . 5
-[15,] . 5 3 . . . . . . 5 5 . . . . . . . 3 . . . . 4 . . . . . .
-[16,] 3 . . . . . . . 2 4 3 4 5 1 . . . . . . . . . 3 . . . . 4 .
-[17,] . . . . . . . . 3 . . . . 3 . . . . . . . . . . . . 4 4 . 4
-[18,] . 5 . . . . . . 5 . . . . 2 4 . . . 3 . 4 . . 3 . . . . 4 4
-[19,] . . . . . . . . . 5 . 5 . . . . . . 4 . . . . . . . . . 5 4
-[20,] . . . . . . . . 4 . . . . 2 . . . . . . . . . . . . . 3 . 4
-[21,] . 5 . . . . . . 3 . . . . 4 3 . . . . . 4 . . 3 . . . . 5 4
-[22,] 3 . . . . . . . 3 . . 3 . . . 4 . . . . . . . . . . . 5 . .
-[23,] . 5 . . . . . . 3 . . . . . . . . . 3 . 4 . . 3 . . . . 4 4
-[24,] . 5 . . . . . . 3 . . . . 2 4 . . . . . 4 . . 4 . . . . 4 4
-[25,] . 5 . . . . 4 . 5 4 . . . 3 5 . . . . . . . . 4 . . . . 5 5
-[26,] . 4 . . . . . . 2 3 3 . . . 3 . . 2 3 . 3 . . 3 . . . 2 . 4
-[27,] . 5 . . . . . . 4 . . .</code></pre>
+<!-- rnb-output-begin eyJkYXRhIjoiMjAgeCAyMCBzcGFyc2UgTWF0cml4IG9mIGNsYXNzIFwiZGdDTWF0cml4XCJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuIFsxLF0gLiAuIC4gLiAuIC4gLiAuIDQgLiAuIC4gLiA0IC4gLiAuIC4gLiAuXG4gWzIsXSAuIDUgLiA1IC4gLiAuIC4gNCAuIC4gNSAuIC4gNCAuIC4gLiAzIC5cbiBbMyxdIC4gLiAuIC4gLiAuIC4gLiA0IC4gLiAyIC4gLiA1IC4gLiAyIC4gLlxuIFs0LF0gNSAuIDMgNCAuIC4gLiAzIC4gNSAzIDQgLiAuIDMgLiAuIDQgNCAuXG4gWzUsXSAuIDUgLiA0IC4gLiAzIDMgNSA1IC4gMiAuIC4gNCAuIC4gNCAzIC5cbiBbNixdIC4gLiAuIC4gNCAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLlxuIFs3LF0gLiAuIC4gNCAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIDUgMyAuXG4gWzgsXSAuIDQgLiA0IC4gLiAyIC4gLiAuIDUgNCAuIC4gNSA0IC4gNCAzIC5cbiBbOSxdIC4gLiAuIC4gLiAuIC4gLiAxIC4gLiA0IC4gLiAzIC4gLiAyIC4gLlxuWzEwLF0gNCA1IC4gNSAuIC4gLiAxIDUgNSAuIC4gLiAuIDUgMyAuIC4gNCAuXG5bMTEsXSA1IC4gLiA0IC4gLiAuIC4gMSAzIDQgNSA1IDMgNSAuIC4gMyAuIC5cblsxMixdIC4gLiAuIC4gLiAuIC4gLiAuIC4gLiAuIC4gMSAuIC4gLiAuIC4gLlxuWzEzLF0gNCAuIDIgNCAuIC4gNSA0IDUgLiAuIC4gLiAzIDQgLiAuIDQgLiAuXG5bMTQsXSAuIC4gLiAzIC4gLiAuIDUgNCAuIC4gNSAuIDMgNCA1IC4gNCAzIC5cblsxNSxdIC4gNSAzIC4gLiAuIC4gLiAuIDUgNSAuIC4gLiAuIC4gLiAuIDMgLlxuWzE2LF0gMyAuIC4gLiAuIC4gLiAuIDIgNCAzIDQgNSAxIC4gLiAuIC4gLiAuXG5bMTcsXSAuIC4gLiAuIC4gLiAuIC4gMyAuIC4gLiAuIDMgLiAuIC4gLiAuIC5cblsxOCxdIC4gNSAuIDUgLiAuIC4gLiA1IC4gLiAuIC4gMiA0IC4gLiAuIDMgLlxuWzE5LF0gLiAuIC4gMiAuIC4gLiAuIC4gNSAuIDUgLiAuIC4gLiAuIC4gNCAuXG5bMjAsXSAuIC4gLiAuIC4gLiAuIC4gNCAuIC4gLiAuIDIgLiAuIC4gLiAuIC5cbiJ9 -->
+<pre><code>20 x 20 sparse Matrix of class &quot;dgCMatrix&quot;
+                                             
+ [1,] . . . . . . . . 4 . . . . 4 . . . . . .
+ [2,] . 5 . 5 . . . . 4 . . 5 . . 4 . . . 3 .
+ [3,] . . . . . . . . 4 . . 2 . . 5 . . 2 . .
+ [4,] 5 . 3 4 . . . 3 . 5 3 4 . . 3 . . 4 4 .
+ [5,] . 5 . 4 . . 3 3 5 5 . 2 . . 4 . . 4 3 .
+ [6,] . . . . 4 . . . . . . . . . . . . . . .
+ [7,] . . . 4 . . . . . . . . . . . . . 5 3 .
+ [8,] . 4 . 4 . . 2 . . . 5 4 . . 5 4 . 4 3 .
+ [9,] . . . . . . . . 1 . . 4 . . 3 . . 2 . .
+[10,] 4 5 . 5 . . . 1 5 5 . . . . 5 3 . . 4 .
+[11,] 5 . . 4 . . . . 1 3 4 5 5 3 5 . . 3 . .
+[12,] . . . . . . . . . . . . . 1 . . . . . .
+[13,] 4 . 2 4 . . 5 4 5 . . . . 3 4 . . 4 . .
+[14,] . . . 3 . . . 5 4 . . 5 . 3 4 5 . 4 3 .
+[15,] . 5 3 . . . . . . 5 5 . . . . . . . 3 .
+[16,] 3 . . . . . . . 2 4 3 4 5 1 . . . . . .
+[17,] . . . . . . . . 3 . . . . 3 . . . . . .
+[18,] . 5 . 5 . . . . 5 . . . . 2 4 . . . 3 .
+[19,] . . . 2 . . . . . 5 . 5 . . . . . . 4 .
+[20,] . . . . . . . . 4 . . . . 2 . . . . . .</code></pre>
 <!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYXMubnVtZXJpYyh3b3JrWzEsMV0pXG5gYGAifQ== -->
+<pre class="r"><code>as.numeric(work[1,1])</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDBcbiJ9 -->
+<pre><code>[1] 0</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudGFyZ2V0PC13b3JrWyw0XVxud29yazwtd29ya1ssLTRdXG5gYGAifQ== -->
+<pre class="r"><code>target&lt;-work[,4]
+work&lt;-work[,-4]</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubm90ZmFpbCA8LSBwcmNvbXBfaXJsYmEod29yaywgbiA9IDEwLCByZXR4ID0gRiwgY2VudGVyID0gRiwgc2NhbGUuID0gRkFMU0UgKVxuXG5gYGAifQ== -->
-<pre class="r"><code>notfail &lt;- prcomp_irlba(work, n = 10, retx = F, center = F, scale. = FALSE )
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcImlybGJhXCIpXG5ub3RmYWlsaXJsYmEgPC0gcHJjb21wX2lybGJhKHdvcmssIG4gPSAxMCwgcmV0eCA9IEYsIGNlbnRlciA9IEYsIHNjYWxlLiA9IEZBTFNFIClcblxuYGBgIn0= -->
+<pre class="r"><code>library(&quot;irlba&quot;)
+notfailirlba &lt;- prcomp_irlba(work, n = 10, retx = F, center = F, scale. = FALSE )
 </code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gYXNNZXRob2Qob2JqZWN0KSA6IFxuICBDaG9sbW9kIGVycm9yICdvdXQgb2YgbWVtb3J5JyBhdCBmaWxlIC4uL0NvcmUvY2hvbG1vZF9tZW1vcnkuYywgbGluZSAxNDdcbiJ9 -->
-<pre><code>Error in asMethod(object) : 
-  Cholmod error 'out of memory' at file ../Core/cholmod_memory.c, line 147</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcIm9ubGluZVBDQVwiKVxubm90ZmFpbDwtYmF0Y2hwY2EoeD13b3JrLCBxPTEwLCBjZW50ZXI9RiwgdHlwZSA9IFwiZGF0YVwiLCBieXJvdyA9IEZBTFNFKVxuYGBgIn0= -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcIm9ubGluZVBDQVwiKVxubm90ZmFpbGJhdGNoPC1iYXRjaHBjYSh4PXdvcmssIHE9MTAsIGNlbnRlcj1GLCB0eXBlID0gXCJkYXRhXCIsIGJ5cm93ID0gRkFMU0UpXG5cbmBgYCJ9 -->
 <pre class="r"><code>library(&quot;onlinePCA&quot;)
-notfail&lt;-batchpca(x=work, q=10, center=F, type = &quot;data&quot;, byrow = FALSE)</code></pre>
+notfailbatch&lt;-batchpca(x=work, q=10, center=F, type = &quot;data&quot;, byrow = FALSE)
+</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3I6IGNhbm5vdCBhbGxvY2F0ZSB2ZWN0b3Igb2Ygc2l6ZSAyLjAgR2JcbiJ9 -->
-<pre><code>Error: cannot allocate vector of size 2.0 Gb</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuICBwY2EgPC0gaW5jUnBjYShwY2EkdmFsdWVzLCBwY2EkdmVjdG9ycywgd29ya1tpLF0sIGktMSwgcSA9IHEpXG5cbmBgYCJ9 -->
-<pre class="r"><code>  pca &lt;- incRpca(pca$values, pca$vectors, work[i,], i-1, q = q)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcIm9ubGluZVBDQVwiKVxubjwtdW5pcXVlKHJhdGluZ3MkdXNlcl9pZClcbnE8LTEwMFxubjA8LTEwMFxucGNhIDwtIHByY29tcCh3b3JrWzE6bjAsXSxjZW50ZXI9RkFMU0UpICMgaW5pdGlhbGl6YXRpb25cbnBjYSA8LSBsaXN0KHZhbHVlcyA9IHBjYSRzZGV2WzE6cV1eMiwgdmVjdG9ycyA9IHBjYSRyb3RhdGlvblssMTpxXSlcbmZvciAoaSBpbiAobjArMSk6bilcbiAgcGNhIDwtIGluY1JwY2EocGNhJHZhbHVlcywgcGNhJHZlY3RvcnMsIHdvcmtbaSxdLCBpLTEsIHEgPSBxKVxuXG5cbmBgYCJ9 -->
+<pre class="r"><code>library(&quot;onlinePCA&quot;)
+n&lt;-unique(ratings$user_id)
+q&lt;-100
+n0&lt;-100
+pca &lt;- prcomp(work[1:n0,],center=FALSE) # initialization
+pca &lt;- list(values = pca$sdev[1:q]^2, vectors = pca$rotation[,1:q])
+for (i in (n0+1):n)
+  pca &lt;- incRpca(pca$values, pca$vectors, work[i,], i-1, q = q)
 </code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoibnVtZXJpY2FsIGV4cHJlc3Npb24gaGFzIDUzNDIzIGVsZW1lbnRzOiBvbmx5IHRoZSBmaXJzdCB1c2VkRXJyb3IgaW4gaWYgKG5vcm14ID49IHRvbCkgeyA6IG1pc3NpbmcgdmFsdWUgd2hlcmUgVFJVRS9GQUxTRSBuZWVkZWRcbiJ9 -->
-<pre><code>numerical expression has 53423 elements: only the first usedError in if (normx &gt;= tol) { : missing value where TRUE/FALSE needed</code></pre>
+<!-- rnb-chunk-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3RyKHZpZXd6eilcblxuYGBgIn0= -->
+<pre class="r"><code>str(viewzz)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiIG51bSBbMToxMDAwMCwgMToyMDFdIDAgNSAwIDQgNCAwIDQgNCAwIDUgLi4uXG4gLSBhdHRyKCosIFwiZGltbmFtZXNcIik9TGlzdCBvZiAyXG4gIC4uJCA6IE5VTExcbiAgLi4kIDogY2hyIFsxOjIwMV0gXCJ0YXJnZXRcIiBcIlwiIFwiXCIgXCJcIiAuLi5cbiJ9 -->
+<pre><code> num [1:10000, 1:201] 0 5 0 4 4 0 4 4 0 5 ...
+ - attr(*, &quot;dimnames&quot;)=List of 2
+  ..$ : NULL
+  ..$ : chr [1:201] &quot;target&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...</code></pre>
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyMgQlNPSSBQQ0EgXG5VIDwtIGJzb2lwY2Eod29yaywgcSwgQj1CLCBieXJvdz1GKSAjIFBDc1xuXG5gYGAifQ== -->
-<pre class="r"><code>## BSOI PCA 
-U &lt;- bsoipca(work, q, B=B, byrow=F) # PCs
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3RyKHBjYWJ0KTtwY2FidCR2YWx1ZXNcblxuYGBgIn0= -->
+<pre class="r"><code>str(pcabt);pcabt$values
 </code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gYXNNZXRob2Qob2JqZWN0KSA6IFxuICBDaG9sbW9kIGVycm9yICdvdXQgb2YgbWVtb3J5JyBhdCBmaWxlIC4uL0NvcmUvY2hvbG1vZF9tZW1vcnkuYywgbGluZSAxNDdcbiJ9 -->
-<pre><code>Error in asMethod(object) : 
-  Cholmod error 'out of memory' at file ../Core/cholmod_memory.c, line 147</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGNhIDwtIGJhdGNocGNhKHdvcmtbMTpuMCxdLCBxLCBjZW50ZXI9eGJhciwgYnlyb3c9VFJVRSlcblxuYGBgIn0= -->
-<pre class="r"><code>pca &lt;- batchpca(work[1:n0,], q, center=xbar, byrow=TRUE)
-</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3I6IGNhbm5vdCBhbGxvY2F0ZSB2ZWN0b3Igb2Ygc2l6ZSAxMDEuOSBNYlxuIn0= -->
-<pre><code>Error: cannot allocate vector of size 101.9 Mb</code></pre>
+<!-- rnb-output-begin eyJkYXRhIjoiTGlzdCBvZiAyXG4gJCB2YWx1ZXMgOiBudW0gWzE6MTAwXSAyNS40NiAxNy43OSAxNC40NCAxMC44IDkuMDMgLi4uXG4gJCB2ZWN0b3JzOiBudW0gWzE6MTAwMDAsIDE6MTAwXSAtMC4xMDEzIDAuMDY5MiAtMC4wMTY1IDAuMDQ1OCAtMC4wMDM3IC4uLlxuICBbMV0gMjUuNDYzNDE3IDE3Ljc4OTU5NyAxNC40NDQxNTcgMTAuODA0NjkwICA5LjAyODAxNiAgOC4zMDE5ODZcbiAgWzddICA3LjExNTAwOCAgNi41NTgzNjYgIDYuNTU2NjUwICA1LjQyOTM3MSAgNS4yNjY4MTggIDQuOTU4OTM1XG4gWzEzXSAgNC42MDM3MTQgIDQuNDY5Nzk5ICA0LjMzMzk0MCAgNC4yMjY4ODcgIDQuMjE2MjU5ICA0LjE5MTU1MFxuIFsxOV0gIDMuOTA0ODMyICAzLjg2NjEyOCAgMy44NTcxMTQgIDMuODA0MjI5ICAzLjY1ODIzMyAgMy41Njk4ODdcbiBbMjVdICAzLjU1NjA4MiAgMy41Mjc1NjMgIDMuNDU1MDI1ICAzLjM3MDA2NiAgMy4zMjEyMjAgIDMuMjcxNTQ0XG4gWzMxXSAgMy4yMTkyNDEgIDMuMDgxMTg4ICAzLjA2NTU5NiAgMy4wNDYzMTUgIDMuMDE1ODkxICAzLjAwMzA5OFxuIFszN10gIDIuOTY2MjMxICAyLjk2MDA0NCAgMi45MjUyMjkgIDIuOTE4Njg2ICAyLjkwMTMzOSAgMi44ODA5NjdcbiBbNDNdICAyLjg1MzYyMSAgMi44NDAwNDEgIDIuODI3MzI5ICAyLjgxMTg2OSAgMi44MTEyMzAgIDIuNzMyODkyXG4gWzQ5XSAgMi42ODU3MjYgIDIuNjQ4OTI5ICAyLjY0MzU3NSAgMi42NDEwNzEgIDIuNjI2NjczICAyLjYwNjA3OFxuIFs1NV0gIDIuNTc5NDE0ICAyLjU0NTgzMiAgMi41NDQyMzMgIDIuNTM0NDk3ICAyLjQ5NjE4OSAgMi40ODQzNjZcbiBbNjFdICAyLjQ2NTczMSAgMi40NjAwMTEgIDIuNDM1MzUyICAyLjM4NzIyMyAgMi4zODUyNzEgIDIuMzgyNTIyXG4gWzY3XSAgMi4zNDg0OTUgIDIuMzI3NzM2ICAyLjMyMjg4OSAgMi4yODQ2NDAgIDIuMjY2ODAyICAyLjI2Mzg4M1xuIFs3M10gIDIuMjUxNzQwICAyLjI0Mzc0OCAgMi4yNDAxNTcgIDIuMjMyMzgzICAyLjIxMTExMSAgMi4yMDQyNzlcbiBbNzldICAyLjE5ODUwMCAgMi4xNzk1NjAgIDIuMTU2MjQ0ICAyLjE1NDYzNyAgMi4xMjIwOTggIDIuMTE4MTgxXG4gWzg1XSAgMi4xMTIwNjEgIDIuMTA3OTY5ICAyLjA2NDE1OCAgMi4wNTk2NjIgIDIuMDU1MDUwICAyLjA0NjUyOFxuIFs5MV0gIDIuMDI5NTY4ICAyLjAyOTEwNyAgMi4wMDY2ODMgIDEuOTk2MzM5ICAxLjk3MzgwNyAgMS45Njc4NzdcbiBbOTddICAxLjk0NDA4MyAgMS45NDI3OTggIDEuODUwODMwICAxLjg0Mjk3OFxuIn0= -->
+<pre><code>List of 2
+ $ values : num [1:100] 25.46 17.79 14.44 10.8 9.03 ...
+ $ vectors: num [1:10000, 1:100] -0.1013 0.0692 -0.0165 0.0458 -0.0037 ...
+  [1] 25.463417 17.789597 14.444157 10.804690  9.028016  8.301986
+  [7]  7.115008  6.558366  6.556650  5.429371  5.266818  4.958935
+ [13]  4.603714  4.469799  4.333940  4.226887  4.216259  4.191550
+ [19]  3.904832  3.866128  3.857114  3.804229  3.658233  3.569887
+ [25]  3.556082  3.527563  3.455025  3.370066  3.321220  3.271544
+ [31]  3.219241  3.081188  3.065596  3.046315  3.015891  3.003098
+ [37]  2.966231  2.960044  2.925229  2.918686  2.901339  2.880967
+ [43]  2.853621  2.840041  2.827329  2.811869  2.811230  2.732892
+ [49]  2.685726  2.648929  2.643575  2.641071  2.626673  2.606078
+ [55]  2.579414  2.545832  2.544233  2.534497  2.496189  2.484366
+ [61]  2.465731  2.460011  2.435352  2.387223  2.385271  2.382522
+ [67]  2.348495  2.327736  2.322889  2.284640  2.266802  2.263883
+ [73]  2.251740  2.243748  2.240157  2.232383  2.211111  2.204279
+ [79]  2.198500  2.179560  2.156244  2.154637  2.122098  2.118181
+ [85]  2.112061  2.107969  2.064158  2.059662  2.055050  2.046528
+ [91]  2.029568  2.029107  2.006683  1.996339  1.973807  1.967877
+ [97]  1.944083  1.942798  1.850830  1.842978</code></pre>
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
@@ -393,7 +338,7 @@ U &lt;- bsoipca(work, q, B=B, byrow=F) # PCs
 <!-- rnb-chunk-begin -->
 <!-- rnb-chunk-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpUaGlzIGlzIGFuIFtSIE1hcmtkb3duXShodHRwOi8vcm1hcmtkb3duLnJzdHVkaW8uY29tKSBOb3RlYm9vay4gV2hlbiB5b3UgZXhlY3V0ZSBjb2RlIHdpdGhpbiB0aGUgbm90ZWJvb2ssIHRoZSByZXN1bHRzIGFwcGVhciBiZW5lYXRoIHRoZSBjb2RlLiANCg0KVHJ5IGV4ZWN1dGluZyB0aGlzIGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqUnVuKiBidXR0b24gd2l0aGluIHRoZSBjaHVuayBvciBieSBwbGFjaW5nIHlvdXIgY3Vyc29yIGluc2lkZSBpdCBhbmQgcHJlc3NpbmcgKkN0cmwrU2hpZnQrRW50ZXIqLiANCg0KYGBge3J9DQpsaWJyYXJ5KGRhdGEudGFibGUpDQpsaWJyYXJ5KE1hdHJpeCkNCg0KaW5wdXQuZm9sZGVyPC0iYmFkYm9va3MiDQpvdXRwdXQubmFtZTwtcGFzdGUoaW5wdXQuZm9sZGVyLCI0IixzZXAgPSAiIikgIyMjb25seSBhZnRlciBzZWxlY3Rpb24NCnJhdGluZ3MgPC0gZnJlYWQocGFzdGUoaW5wdXQuZm9sZGVyLCcvY3JhdGluZ3MuY3N2JyxzZXAgPSAiIikpDQoNCnJhdGluZ3M8LXJhdGluZ3NbcmF0aW5ncyR1c2VyX2lkIT00LF0NCmBgYA0KYGBge3J9DQppIDwtIGMoMSwzOjgpOyBqIDwtIGMoMiw5LDY6MTApOyB4IDwtIDcgKiAoMTo3KQ0KKEEgPC0gc3BhcnNlTWF0cml4KGksIGosIHggPSB4KSkgICAgICAgICAgICAgICAgICAgICMjICA4IHggMTAgImRnQ01hdHJpeCINCnN1bW1hcnkoQSkNCnN0cihBKSAjIG5vdGUgdGhhdCAqaW50ZXJuYWxseSogMC1iYXNlZCByb3cgaW5kaWNlcyBhcmUgdXNlZA0KDQooc0EgPC0gc3BhcnNlTWF0cml4KGksIGosIHggPSB4LCBzeW1tZXRyaWMgPSBUUlVFKSkgIyMgMTAgeCAxMCAiZHNDTWF0cml4Ig0KKHRBIDwtIHNwYXJzZU1hdHJpeChpLCBqLCB4ID0geCwgdHJpYW5ndWxhcj0gVFJVRSkpICMjIDEwIHggMTAgImR0Q01hdHJpeCINCnN0b3BpZm5vdCggYWxsKHNBID09IHRBICsgdCh0QSkpICwNCiAgICAgICAgICAgaWRlbnRpY2FsKHNBLCBhcyh0QSArIHQodEEpLCAic3ltbWV0cmljTWF0cml4IikpKQ0KDQpgYGANCmBgYHtyfQ0Kd29yayA8LSBzcGFyc2VNYXRyaXgocmF0aW5ncyRpdGVtX2lkLCByYXRpbmdzJHVzZXJfaWQsIHggPSByYXRpbmdzJHJhdGluZykNCnN0cih3b3JrKQ0Kd29ya1sxOjIwLDE6MjBdDQphcy5udW1lcmljKHdvcmtbMSwxXSkNCmBgYA0KYGBge3J9DQpsaWJyYXJ5KCJpcmxiYSIpDQpub3RmYWlsIDwtIHByY29tcF9pcmxiYSh3b3JrLCBuID0gMTAsIHJldHggPSBGLCBjZW50ZXIgPSBGLCBzY2FsZS4gPSBGQUxTRSApDQoNCmBgYA0KYGBge3J9DQpsaWJyYXJ5KCJvbmxpbmVQQ0EiKQ0Kbm90ZmFpbDwtYmF0Y2hwY2EoeD13b3JrLCBxPTEwLCBjZW50ZXI9RiwgdHlwZSA9ICJkYXRhIiwgYnlyb3cgPSBGQUxTRSkNCg0KYGBgDQoNCmBgYHtyfQ0KbGlicmFyeSgib25saW5lUENBIikNCm48LXVuaXF1ZShyYXRpbmdzJHVzZXJfaWQpDQpxPC0xMDANCm4wPC0xMDANCnBjYSA8LSBwcmNvbXAod29ya1sxOm4wLF0sY2VudGVyPUZBTFNFKSAjIGluaXRpYWxpemF0aW9uDQpwY2EgPC0gbGlzdCh2YWx1ZXMgPSBwY2Ekc2RldlsxOnFdXjIsIHZlY3RvcnMgPSBwY2Ekcm90YXRpb25bLDE6cV0pDQpmb3IgKGkgaW4gKG4wKzEpOm4pDQogIHBjYSA8LSBpbmNScGNhKHBjYSR2YWx1ZXMsIHBjYSR2ZWN0b3JzLCB3b3JrW2ksXSwgaS0xLCBxID0gcSkNCg0KDQpgYGANCmBgYHtyfQ0KIyMgU2ltdWxhdGUgQnJvd25pYW4gTW90aW9uDQpuIDwtIDEwMCAjIG51bWJlciBvZiBzYW1wbGUgcGF0aHMNCmQgPC0gNTAgIyBudW1iZXIgb2Ygb2JzZXJ2YXRpb24gcG9pbnRzDQp4IDwtIG1hdHJpeChybm9ybShuKmQsc2Q9MS9zcXJ0KGQpKSxuLGQpDQp4IDwtIHQoYXBwbHkoeCwxLGN1bXN1bSkpICMgZGltKHgpID0gYygxMDAsNTApDQoNCnEgPC0gMTAgIyBudW1iZXIgb2YgUEMgdG8gY29tcHV0ZQ0KQiA8LSAzMCAjIGJsb2NrIHNpemUNCg0KIyMgQlNPSSBQQ0EgDQpVIDwtIGJzb2lwY2Eod29yaywgcSwgQj1CLCBieXJvdz1GKSAjIFBDcw0KbGFtYmRhIDwtIGFwcGx5KHdvcmsgJSolIFUsIDIsIHZhcikgIyBlaWdlbnZhbHVlcyANCg0KYGBgDQpgYGB7cn0NCiMjIEluaXRpYWxpemF0aW9uDQpuIDwtIDFlMyAgIyBzYW1wbGUgc2l6ZQ0KbjAgPC0gNWUyICMgaW5pdGlhbCBzYW1wbGUgc2l6ZQ0KZCA8LSAxMCAgICMgbnVtYmVyIG9mIHZhcmlhYmxlcw0KcSA8LSAxMDAgIyBudW1iZXIgb2YgUEMgdG8gY29tcHV0ZQ0KeCA8LSBtYXRyaXgocnVuaWYobipkKSwgbiwgZCkNCnggPC0geCAlKiUgZGlhZyhzcXJ0KDEyKigxOmQpKSkNCiMgVGhlIGVpZ2VudmFsdWVzIG9mIHggYXJlIGNsb3NlIHRvIDEsIDIsIC4uLiwgZA0KIyBhbmQgdGhlIGNvcnJlc3BvbmRpbmcgZWlnZW52ZWN0b3JzIGFyZSBjbG9zZSB0byANCiMgdGhlIGNhbm9uaWNhbCBiYXNpcyBvZiBSXmQNCg0KIyMgU0dBIFBDQQ0KeGJhciA8LSBjb2xNZWFucyh3b3JrWzE6bjAsXSkNCnBjYSA8LSBiYXRjaHBjYSh3b3JrWzE6bjAsXSwgcSwgY2VudGVyPXhiYXIsIGJ5cm93PVRSVUUpDQpmb3IgKGkgaW4gKG4wKzEpOm4pIHsNCiAgeGJhciA8LSB1cGRhdGVNZWFuKHhiYXIsIHdvcmtbaSxdLCBpLTEpDQogIHBjYSA8LSBzZ2FwY2EocGNhJHZhbHVlcywgcGNhJHZlY3RvcnMsIHdvcmtbaSxdLCAyL2ksIHEsIHhiYXIpDQp9DQpwY2ENCg0KYGBgDQoNCg0KQWRkIGEgbmV3IGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqSW5zZXJ0IENodW5rKiBidXR0b24gb24gdGhlIHRvb2xiYXIgb3IgYnkgcHJlc3NpbmcgKkN0cmwrQWx0K0kqLg0KDQpXaGVuIHlvdSBzYXZlIHRoZSBub3RlYm9vaywgYW4gSFRNTCBmaWxlIGNvbnRhaW5pbmcgdGhlIGNvZGUgYW5kIG91dHB1dCB3aWxsIGJlIHNhdmVkIGFsb25nc2lkZSBpdCAoY2xpY2sgdGhlICpQcmV2aWV3KiBidXR0b24gb3IgcHJlc3MgKkN0cmwrU2hpZnQrSyogdG8gcHJldmlldyB0aGUgSFRNTCBmaWxlKS4NCg0KVGhlIHByZXZpZXcgc2hvd3MgeW91IGEgcmVuZGVyZWQgSFRNTCBjb3B5IG9mIHRoZSBjb250ZW50cyBvZiB0aGUgZWRpdG9yLiBDb25zZXF1ZW50bHksIHVubGlrZSAqS25pdCosICpQcmV2aWV3KiBkb2VzIG5vdCBydW4gYW55IFIgY29kZSBjaHVua3MuIEluc3RlYWQsIHRoZSBvdXRwdXQgb2YgdGhlIGNodW5rIHdoZW4gaXQgd2FzIGxhc3QgcnVuIGluIHRoZSBlZGl0b3IgaXMgZGlzcGxheWVkLg0KYGBge3J9DQoNCmBgYA0K</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpUaGlzIGlzIGFuIFtSIE1hcmtkb3duXShodHRwOi8vcm1hcmtkb3duLnJzdHVkaW8uY29tKSBOb3RlYm9vay4gV2hlbiB5b3UgZXhlY3V0ZSBjb2RlIHdpdGhpbiB0aGUgbm90ZWJvb2ssIHRoZSByZXN1bHRzIGFwcGVhciBiZW5lYXRoIHRoZSBjb2RlLiANCg0KVHJ5IGV4ZWN1dGluZyB0aGlzIGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqUnVuKiBidXR0b24gd2l0aGluIHRoZSBjaHVuayBvciBieSBwbGFjaW5nIHlvdXIgY3Vyc29yIGluc2lkZSBpdCBhbmQgcHJlc3NpbmcgKkN0cmwrU2hpZnQrRW50ZXIqLiANCg0KYGBge3J9DQpsaWJyYXJ5KGRhdGEudGFibGUpDQpsaWJyYXJ5KE1hdHJpeCkNCg0KaW5wdXQuZm9sZGVyIDwtICJiYWRib29rcyINCm91dHB1dC5uYW1lIDwtIHBhc3RlKGlucHV0LmZvbGRlciwiNCIsc2VwID0gIiIpICMjI29ubHkgYWZ0ZXIgc2VsZWN0aW9uDQpyYXRpbmdzIDwtIGZyZWFkKHBhc3RlKGlucHV0LmZvbGRlciwnL2NyYXRpbmdzLmNzdicsc2VwID0gIiIpKQ0KDQoNCiN1c2VyYXRpbmdzPC1yYXRpbmdzW3JhdGluZ3MkdXNlcl9pZD09NCxdDQojcmF0aW5nczwtcmF0aW5nc1tyYXRpbmdzJHVzZXJfaWQhPTQsXQ0KI2ZvcihpdHIgaW4gMTptYXgocmF0aW5ncyRpdGVtX2lkKSl7DQojICBpdGVyYXRpbmc8LXVzZXJhdGluZ3NbdXNlcmF0aW5ncyRpdGVtX2lkPT1pdHIsXQ0KI30NCmBgYA0KYGBge3J9DQppIDwtIGMoMSwzOjgpOyBqIDwtIGMoMiw5LDY6MTApOyB4IDwtIDcgKiAoMTo3KQ0KKEEgPC0gc3BhcnNlTWF0cml4KGksIGosIHggPSB4KSkgICAgICAgICAgICAgICAgICAgICMjICA4IHggMTAgImRnQ01hdHJpeCINCnN1bW1hcnkoQSkNCnN0cihBKSAjIG5vdGUgdGhhdCAqaW50ZXJuYWxseSogMC1iYXNlZCByb3cgaW5kaWNlcyBhcmUgdXNlZA0KDQooc0EgPC0gc3BhcnNlTWF0cml4KGksIGosIHggPSB4LCBzeW1tZXRyaWMgPSBUUlVFKSkgIyMgMTAgeCAxMCAiZHNDTWF0cml4Ig0KKHRBIDwtIHNwYXJzZU1hdHJpeChpLCBqLCB4ID0geCwgdHJpYW5ndWxhcj0gVFJVRSkpICMjIDEwIHggMTAgImR0Q01hdHJpeCINCnN0b3BpZm5vdCggYWxsKHNBID09IHRBICsgdCh0QSkpICwNCiAgICAgICAgICAgaWRlbnRpY2FsKHNBLCBhcyh0QSArIHQodEEpLCAic3ltbWV0cmljTWF0cml4IikpKQ0KDQpgYGANCmBgYHtyfQ0Kd29yayA8LSBzcGFyc2VNYXRyaXgocmF0aW5ncyRpdGVtX2lkLCByYXRpbmdzJHVzZXJfaWQsIHggPSByYXRpbmdzJHJhdGluZykNCnN0cih3b3JrKQ0Kd29ya1sxOjIwLDE6MjBdDQphcy5udW1lcmljKHdvcmtbMSwxXSkNCnRhcmdldDwtd29ya1ssNF0NCndvcms8LXdvcmtbLC00XQ0KYGBgDQpgYGB7cn0NCmxpYnJhcnkoImlybGJhIikNCm5vdGZhaWxpcmxiYSA8LSBwcmNvbXBfaXJsYmEod29yaywgbiA9IDEwLCByZXR4ID0gRiwgY2VudGVyID0gRiwgc2NhbGUuID0gRkFMU0UgKQ0KDQpgYGANCmBgYHtyfQ0KbGlicmFyeSgib25saW5lUENBIikNCm5vdGZhaWxiYXRjaDwtYmF0Y2hwY2EoeD13b3JrLCBxPTEwLCBjZW50ZXI9RiwgdHlwZSA9ICJkYXRhIiwgYnlyb3cgPSBGQUxTRSkNCg0KYGBgDQoNCmBgYHtyfQ0KbGlicmFyeSgib25saW5lUENBIikNCm48LXVuaXF1ZShyYXRpbmdzJHVzZXJfaWQpDQpxPC0xMDANCm4wPC0xMDANCnBjYSA8LSBwcmNvbXAod29ya1sxOm4wLF0sY2VudGVyPUZBTFNFKSAjIGluaXRpYWxpemF0aW9uDQpwY2EgPC0gbGlzdCh2YWx1ZXMgPSBwY2Ekc2RldlsxOnFdXjIsIHZlY3RvcnMgPSBwY2Ekcm90YXRpb25bLDE6cV0pDQpmb3IgKGkgaW4gKG4wKzEpOm4pDQogIHBjYSA8LSBpbmNScGNhKHBjYSR2YWx1ZXMsIHBjYSR2ZWN0b3JzLCB3b3JrW2ksXSwgaS0xLCBxID0gcSkNCg0KDQpgYGANCmBgYHtyfQ0KIyMgU2ltdWxhdGUgQnJvd25pYW4gTW90aW9uDQpuIDwtIDIwMCAjIG51bWJlciBvZiBzYW1wbGUgcGF0aHMNCmQgPC0gMTAwICMgbnVtYmVyIG9mIG9ic2VydmF0aW9uIHBvaW50cw0KeCA8LSBtYXRyaXgocm5vcm0obipkLHNkPTEvc3FydChkKSksbixkKQ0KeCA8LSB0KGFwcGx5KHgsMSxjdW1zdW0pKSAjIGRpbSh4KSA9IGMoMTAwLDUwKQ0KDQpxIDwtIDIwMCAjIG51bWJlciBvZiBQQyB0byBjb21wdXRlDQpCIDwtIDYwICMgYmxvY2sgc2l6ZQ0KDQojIyBCU09JIFBDQSANClUgPC0gYnNvaXBjYSh3b3JrLCBxLCBCPUIsIGJ5cm93PUYpICMgUENzDQp3cml0ZS5jc3YoY2JpbmQodGFyZ2V0LFUpLGZpbGU9IjR0aFBDQUxMLmNzdiIpDQojbGFtYmRhIDwtIGFwcGx5KHdvcmsgJSolIFUsIDIsIHZhcikgIyBlaWdlbnZhbHVlcyANCiN2aWV3eno8LWNiaW5kKHRhcmdldCxVKQ0KI3N0cih2aWV3enopDQpgYGANCmBgYHtyfQ0Kd29yazwtdCh3b3JrKQ0KIyMgSW5pdGlhbGl6YXRpb24NCm4gPC0gMWUzICAjIHNhbXBsZSBzaXplDQpuMCA8LSA1ZTIgIyBpbml0aWFsIHNhbXBsZSBzaXplDQpkIDwtIDEwICAgIyBudW1iZXIgb2YgdmFyaWFibGVzDQpxIDwtIDEwMCAjIG51bWJlciBvZiBQQyB0byBjb21wdXRlDQp4IDwtIG1hdHJpeChydW5pZihuKmQpLCBuLCBkKQ0KeCA8LSB4ICUqJSBkaWFnKHNxcnQoMTIqKDE6ZCkpKQ0KIyBUaGUgZWlnZW52YWx1ZXMgb2YgeCBhcmUgY2xvc2UgdG8gMSwgMiwgLi4uLCBkDQojIGFuZCB0aGUgY29ycmVzcG9uZGluZyBlaWdlbnZlY3RvcnMgYXJlIGNsb3NlIHRvIA0KIyB0aGUgY2Fub25pY2FsIGJhc2lzIG9mIFJeZA0KDQojIyBTR0EgUENBDQp4YmFyIDwtIGNvbE1lYW5zKHdvcmtbMTpuMCxdKQ0KcGNhYnQgPC0gYmF0Y2hwY2Eod29ya1sxOm4wLF0sIHEsIGNlbnRlcj14YmFyLCBieXJvdz1UKQ0KZm9yIChpIGluIChuMCsxKTpuKSB7DQogIHhiYXIgPC0gdXBkYXRlTWVhbih4YmFyLCB3b3JrW2ksXSwgaS0xKQ0KICBwY2FidCA8LSBzZ2FwY2EocGNhYnQkdmFsdWVzLCBwY2FidCR2ZWN0b3JzLCB3b3JrW2ksXSwgMi9pLCBxLCB4YmFyKQ0KfQ0Kc3RyKHBjYWJ0KTtwY2FidCR2YWx1ZXMNCndyaXRlLmNzdihjYmluZCh0YXJnZXQscGNhYnQkdmVjdG9ycyksZmlsZT0iNHRoUENBTEwyLmNzdiIpDQpgYGANCg0KDQpBZGQgYSBuZXcgY2h1bmsgYnkgY2xpY2tpbmcgdGhlICpJbnNlcnQgQ2h1bmsqIGJ1dHRvbiBvbiB0aGUgdG9vbGJhciBvciBieSBwcmVzc2luZyAqQ3RybCtBbHQrSSouDQoNCldoZW4geW91IHNhdmUgdGhlIG5vdGVib29rLCBhbiBIVE1MIGZpbGUgY29udGFpbmluZyB0aGUgY29kZSBhbmQgb3V0cHV0IHdpbGwgYmUgc2F2ZWQgYWxvbmdzaWRlIGl0IChjbGljayB0aGUgKlByZXZpZXcqIGJ1dHRvbiBvciBwcmVzcyAqQ3RybCtTaGlmdCtLKiB0byBwcmV2aWV3IHRoZSBIVE1MIGZpbGUpLg0KDQpUaGUgcHJldmlldyBzaG93cyB5b3UgYSByZW5kZXJlZCBIVE1MIGNvcHkgb2YgdGhlIGNvbnRlbnRzIG9mIHRoZSBlZGl0b3IuIENvbnNlcXVlbnRseSwgdW5saWtlICpLbml0KiwgKlByZXZpZXcqIGRvZXMgbm90IHJ1biBhbnkgUiBjb2RlIGNodW5rcy4gSW5zdGVhZCwgdGhlIG91dHB1dCBvZiB0aGUgY2h1bmsgd2hlbiBpdCB3YXMgbGFzdCBydW4gaW4gdGhlIGVkaXRvciBpcyBkaXNwbGF5ZWQuDQpgYGB7cn0NCg0KYGBgDQo=</div>
 
 
 

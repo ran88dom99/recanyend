@@ -1,0 +1,279 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+excersise in sparse matrix
+then various pca including online methods
+bigpca failed. File BIG PCA SVD deleted and added to this file.
+
+```{r}
+#source("runfirst.R")
+library(data.table)
+library(Matrix)
+
+input.folder <- "badbooks"
+ratings <- fread(paste(input.folder,'/cratings.csv',sep = ""))
+
+ratings[,.N,by=user_id]
+trgusr <- 1188
+target_ratings <- ratings[ratings$user_id==trgusr,]
+ratings <- ratings[ratings$user_id!=trgusr,]
+
+output.name <- paste(input.folder,trgusr,sep = "") ###only after selection
+
+compare.test<-ratings[item_id==10000]
+
+pca.over.stat<-T
+```
+```{r}
+items <- fread(paste(input.folder,'/citems.csv',sep = ""))#language_code,
+items <- items[,.(item_id,original_publication_year,editions_count,work_ratings_count,work_text_reviews_count, ratings_count,ratings_1,ratings_2,ratings_3,ratings_4,ratings_5,num.I)]
+#recalculate all those bellow
+#hist(items$sd.I),med.I,sd.I,men.I
+
+ratings[,med.I:=as.double(median(rating)),by=item_id]
+ratings[,sd.I:=as.double(sd(rating)),by=item_id]
+ratings[,men.I:=as.double(mean(rating)),by=item_id]
+
+items.recalc<-ratings[, .SD[1], by=item_id]
+items.recalc<-items.recalc[,.(item_id,med.I,men.I,sd.I)]
+dim(items);length(unique(items$item_id))
+dim(items.recalc);length(unique(items.recalc$item_id))
+items.recalc<-items.recalc[items, on="item_id"]
+dim(items.recalc)
+
+for (itr in (names(items.recalc))) {
+  dummy <- get(itr,  items.recalc)
+  if(!is.integer(dummy)){
+    dummy <- as.integer(round(dummy * 1000))
+  }
+  dummy <- dummy - min(dummy, na.rm = T) +1
+    items.recalc[, (itr) := dummy]
+}
+ 
+str(items.recalc)
+summary(items.recalc)
+target_ratings<-target_ratings[,.(rating,item_id,user_id)]
+
+if(!pca.over.stat){
+items.recalc<-target_ratings[items.recalc, on="item_id"] ;
+dim(items.recalc)
+length(unique(items.recalc$item_id));max(unique(items.recalc$item_id))
+length(unique(ratings$item_id));max(unique(items.recalc$item_id))
+}
+  
+ratings[,men.I:=NULL];ratings[,sd.I:=NULL];ratings[,med.I:=NULL]
+```
+```{r}
+mx.usr.indx <- max(ratings$user_id) +1
+
+if(pca.over.stat){
+  
+oldnames <- names(items.recalc)
+
+sts.indx <- (mx.usr.indx -1 + length(names(items.recalc)))
+names(items.recalc) <- as.character(c(mx.usr.indx:sts.indx))
+names(items.recalc) <- c("item_id",names(items.recalc)[2:length(names(items.recalc))])
+library(reshape2)
+items.recalc <- melt(items.recalc, id.vars = "item_id")
+items.recalc <- items.recalc[,.(variable,item_id,value)]
+
+names(items.recalc) <- names(ratings)
+items.recalc[,user_id:=as.integer(levels(user_id))[as.integer(user_id)]]
+str(items.recalc)
+str(ratings)
+
+ratings <- rbindlist(list(ratings,items.recalc), use.names = T)
+ratings[,item_id:=as.integer(item_id)]
+ratings[,rating:=as.integer(rating)]
+
+ratings<-ratings[! is.na(rating) ]
+str(ratings)
+summary(ratings)
+}
+```
+
+
+
+```{r}
+
+work <- sparseMatrix(ratings$item_id, ratings$user_id, x = ratings$rating)
+str(work)
+work[1:20,1:20]
+as.numeric(work[1,1])
+length(unique(work@p));max(unique(work@p))
+length(unique(work@i));max(unique(work@i))
+dim(work)
+ 
+ now.compare <- which(work[10000,]>0); now.compare <- now.compare[now.compare<mx.usr.indx]
+if(! identical(sort(compare.test$user_id) , now.compare)) stop("not identical")
+```
+```{r}
+ # create a list with required components
+ sd_of_pca <- list(name = "John", age = 21, GPA = 3.5)
+ # name the class appropriately
+ class(sd_of_pca) <- "student"
+ # That's it! we now have an object of class "student"
+ sd_of_pca
+ 
+ #create index vector
+
+ index.vector <- c(1:(length(work[,1])/2))
+ if(pca.over.stat)
+ index.vector <- c(index.vector, mx.usr.indx:sts.indx)
+ #scale or center?
+ 
+ 
+```
+ 
+
+```{r}
+work<-t(work)
+library("irlba")
+notfail <- prcomp_irlba((work[index.vector,]), n = 30, retx = F, center = F, scale = F )
+is.matrix(notfail$rotation)
+summary(notfail);str(notfail);
+sd_of_pca$prcomp_irlba<-summary(notfail)$importance;str(sd_of_pca)
+sum(notfail$rotation[,1]==0);sum(notfail$rotation[1,]==0);dim(notfail$rotation)
+forprinting <- data.table(as.data.frame(notfail$rotation),keep.rownames = T)
+forprinting[,item_id:=as.integer(rn)];forprinting[,rn:=NULL] ;dim(forprinting);
+forprinting <- round(items.recalc[forprinting, on="item_id"] ,digits = 4) ;dim(forprinting)
+#write.csv(forprinting,file=paste0(trgusr,"th",input.folder,"PCAprcomp_irlba.csv"))
+#rm(notfail,forprinting) 
+#gc()
+#?prcomp_irlba
+#?irlba items.recalc<-target_ratings[items.recalc, on="item_id"] ;
+#notfail
+```
+```{r}
+library("onlinePCA")
+notfail<-batchpca(x=work, q=10, center=F, type = "data", byrow = FALSE)
+?batchpca
+```
+
+```{r}
+library("onlinePCA")
+n <- unique(ratings$user_id)
+q <- 100
+n0 <- 100
+pca <- prcomp(work[1:n0,],center=FALSE) # initialization
+pca <- list(values = pca$sdev[1:q]^2, vectors = pca$rotation[,1:q])
+for (i in (n0+1):n)
+  pca <- incRpca(pca$values, pca$vectors, work[i,], i-1, q = q)
+
+dim(pca)
+summary(pca)
+```
+```{r}
+## Simulate Brownian Motion
+n <- 200 # number of sample paths
+d <- 100 # number of observation points
+x <- matrix(rnorm(n*d,sd=1/sqrt(d)),n,d)
+x <- t(apply(x,1,cumsum)) # dim(x) = c(100,50)
+ 
+q <- 200 # number of PC to compute
+B <- 60 # block size
+
+## BSOI PCA 
+U <- bsoipca(work, q, B=B, byrow=F) # PCs
+write.csv(cbind(target,U),file="4thPCALL.csv")
+#lambda <- apply(work %*% U, 2, var) # eigenvalues 
+#viewzz<-cbind(target,U)
+#str(viewzz)
+```
+```{r}
+work<-t(work)
+## Initialization
+n <- 1e3  # sample size
+n0 <- 5e2 # initial sample size
+d <- 10   # number of variables
+q <- 100 # number of PC to compute
+x <- matrix(runif(n*d), n, d)
+x <- x %*% diag(sqrt(12*(1:d)))
+# The eigenvalues of x are close to 1, 2, ..., d
+# and the corresponding eigenvectors are close to 
+# the canonical basis of R^d
+
+## SGA PCA
+xbar <- colMeans(work[1:n0,])
+pcabt <- batchpca(work[1:n0,], q, center=xbar, byrow=T)
+for (i in (n0+1):n) {
+  xbar <- updateMean(xbar, work[i,], i-1)
+  pcabt <- sgapca(pcabt$values, pcabt$vectors, work[i,], 2/i, q, xbar)
+}
+str(pcabt);pcabt$values
+write.csv(cbind(target,pcabt$vectors),file="4thPCALL2.csv")
+```
+ 
+```{r}
+
+```
+
+#IGNORE VERYTHING HERE
+```{r}
+i <- c(1,3:8); j <- c(2,9,6:10); x <- 7 * (1:7)
+(A <- sparseMatrix(i, j, x = x))                    ##  8 x 10 "dgCMatrix"
+summary(A)
+str(A) # note that *internally* 0-based row indices are used
+
+(sA <- sparseMatrix(i, j, x = x, symmetric = TRUE)) ## 10 x 10 "dsCMatrix"
+(tA <- sparseMatrix(i, j, x = x, triangular= TRUE)) ## 10 x 10 "dtCMatrix"
+stopifnot( all(sA == tA + t(tA)) ,
+           identical(sA, as(tA + t(tA), "symmetricMatrix")))
+
+```
+#this is bigpca package specific
+```{r}
+library(bigpca)
+library(data.table)
+library(dplyr)
+
+input.folder<-"badbooks"
+output.name<-paste(input.folder,"4",sep = "") ###only after selection
+ratings <- fread(paste(input.folder,'/cratings.csv',sep = ""))
+
+# create a test big.matrix object (file-backed)
+ #orig.dir <- getwd(); setwd(tempdir()); # move to temporary dir
+u.ud<-unique(ratings$user_id)
+u.id<-unique(ratings$item_id)
+lu.id<-length(u.id)
+lu.ud<-length(u.ud)
+ bM <- filebacked.big.matrix(9998,7999,
+        backingfile = "bickzz.bck")
+ #ratingmat <- spread(select(ratings, item_id, user_id, rating), item_id, rating) %>% select(-user_id)
+ for(i in 1:9998){ #i=529
+   rowed<-ratings[item_id==i]
+   for(t in 1:7999){ #t=618
+     colled<-rowed[user_id==t]
+     if(length(colled$user_id)>0){
+       bM[i,t] <- mean(colled$rating)
+       if(length(colled$user_id)>1) print("duplicates")
+     }
+   }
+ }
+
+ prv.big.matrix(bM)
+ # now transposebackingpath = getwd(),
+ tbM <- big.t(bM,dir=getwd(),verbose=T)
+ prv.big.matrix(tbM,row=10,col=4)
+ colSDs <- bmcapply(tbM,2,sd,n.cores=10)
+ rowSDs <- bmcapply(bM,1,sd,n.cores=10) # use up to 10 cores if available
+ ##  generate some data with reasonable intercorrelations ##
+ #mat <- sim.cor(500,200,genr=function(n){ (runif(n)/2+.5) })
+ bmat <- as.big.matrix(mat)
+ prv.big.matrix(bmat,row=10,col=4)
+ # calculate PCA 
+ result <- big.PCA(bM)
+ corrected <- PC.correct(result,bmat)
+ corrected2 <- PC.correct(result,bmat,n.cores=5)
+ all.equal(corrected,corrected2)
+ rm(tbM); rm(bM);rm(result); 
+ rm(corrected);rm(corrected2); rm(bmat)
+ clear_active_bms() # delete big.matrix objects in memory
+ unlink(c("test.bck","test.dsc"))
+ setwd(orig.dir)
+
+```
+
+
